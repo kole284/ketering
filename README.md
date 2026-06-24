@@ -1,37 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KeteringGo
 
-## Getting Started
+Next.js 16 aplikacija za poručivanje keteringa, sada sa PostgreSQL backend-om.
 
-First, run the development server:
+## Tehnologije
+
+- Next.js 16 (App Router)
+- React 19
+- PostgreSQL
+- `pg` (node postgres klijent)
+
+## Pokretanje projekta
+
+1. Instaliraj zavisnosti:
+
+```bash
+npm install
+```
+
+2. Napravi lokalni env fajl:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Podigni PostgreSQL lokalno:
+
+```bash
+docker compose up -d postgres
+```
+
+Proveri da `DATABASE_URL` pokazuje na aktivnu bazu:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/keteringgo
+```
+
+4. Pokreni migracije i seed:
+
+```bash
+npm run db:setup
+```
+
+5. Startuj aplikaciju:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## PostgreSQL skripte
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm run db:migrate` - kreira tabele i indekse
+- `npm run db:seed` - popunjava početne gradove i restorane
+- `npm run db:setup` - migracija + seed u jednom koraku
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Seed podaci se čitaju iz `src/lib/server/sample-data.json`, koji koristi i fallback režim aplikacije. Trenutno se u bazu upisuju Beograd, Novi Sad, Niš i 7 test restorana sa ponudama i proizvodima.
 
-## Learn More
+## Email potvrde
 
-To learn more about Next.js, take a look at the following resources:
+Porudžbina se čuva u PostgreSQL tabelama `orders` i `order_items`, a zatim `POST /api/orders` poziva EmailJS servis da kupcu pošalje potvrdu na email koji je uneo u formi.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+U `.env.local` podesi:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+EMAILJS_SERVICE_ID=your_emailjs_service_id
+EMAILJS_TEMPLATE_ID=your_emailjs_template_id
+EMAILJS_PUBLIC_KEY=your_emailjs_public_key
+EMAILJS_PRIVATE_KEY=your_emailjs_private_key
+```
 
-## Deploy on Vercel
+EmailJS template može da koristi ove promenljive:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `to_email` - email kupca
+- `to_name` - ime kupca
+- `subject` ili `order_subject` - naslov poruke
+- `message` ili `text_message` - kompletna tekstualna potvrda
+- `html_message` - kompletna HTML potvrda
+- `item_details`, `item_details_html`, `total`, `event_address`, `event_date`, `event_time`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# ketering
+Ako EmailJS nije konfigurisan, porudžbina se i dalje čuva, a API vraća da je email preskočen.
+
+## API endpoint-i
+
+- `GET /api/cities` - lista gradova i dostupnosti usluge
+- `GET /api/restaurants?city=Beograd` - lista restorana za grad
+- `GET /api/restaurants/:id` - detalji jednog restorana
+- `POST /api/orders` - kreiranje porudžbine
+
+## Napomena o dostupnosti
+
+Seed podaci su podešeni tako da je usluga trenutno dostupna samo u Beogradu. Za ostale gradove frontend prikazuje poruku o nedostupnosti.

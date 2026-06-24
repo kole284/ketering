@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Space_Grotesk } from "next/font/google";
+import ThemeToggle from "@/components/theme-toggle";
+import Script from "next/script";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -13,8 +15,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "KeteringGo | Porucivanje keteringa",
-  description: "Frontend demo za porucivanje keteringa inspirisan Glovo iskustvom.",
+  title: "KeteringGo | Poručivanje keteringa",
+  description: "Frontend demo za poručivanje keteringa inspirisan Glovo iskustvom.",
   manifest: "/site.webmanifest",
   icons: {
     icon: [
@@ -36,8 +38,28 @@ export default function RootLayout({
     <html
       lang="sr"
       className={`${dmSans.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(() => {
+            try {
+              const storageKey = 'keteringgo-theme';
+              const savedTheme = window.localStorage.getItem(storageKey);
+              const theme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'light';
+              const root = document.documentElement;
+              root.classList.toggle('theme-dark', theme === 'dark');
+              root.style.colorScheme = theme;
+            } catch (error) {
+              document.documentElement.style.colorScheme = 'light';
+            }
+          })();`}
+        </Script>
+      </head>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <ThemeToggle />
+      </body>
     </html>
   );
 }
