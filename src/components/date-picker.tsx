@@ -82,13 +82,15 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
         type="button"
         onClick={openPicker}
         className={[
-          "mt-2 flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-base font-medium shadow-sm outline-none transition focus:border-teal-500",
+          "mt-2 flex w-full items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--input)] px-4 py-3 text-left text-base font-medium text-[color:var(--foreground)] shadow-sm outline-none transition focus:border-[color:var(--primary)]",
           className ?? "",
         ].join(" ")}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <span className={isValidDateValue(value) ? "text-slate-900" : "text-slate-400"}>{displayValue}</span>
+        <span className={isValidDateValue(value) ? "text-[color:var(--foreground)]" : "text-[color:var(--muted-foreground)]"}>
+          {displayValue}
+        </span>
       </button>
 
       {open && portalTarget ? createPortal(
@@ -99,7 +101,7 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
             aria-modal="true"
             aria-label="Izbor datuma"
             tabIndex={-1}
-            className="date-picker-dialog w-full max-w-md overflow-hidden rounded-[28px] border shadow-2xl outline-none"
+            className="date-picker-dialog w-full max-w-md overflow-hidden outline-none"
           >
             <div className="date-picker-header border-b px-5 py-4">
               <p className="date-picker-kicker text-xs font-bold uppercase tracking-[0.22em]">Datum</p>
@@ -112,7 +114,7 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
 
             <div className="px-4 py-4 sm:px-5">
               <p className="date-picker-column-label mb-2 text-xs font-bold uppercase tracking-[0.18em]">Dani</p>
-              <div className="date-picker-list max-h-80 overflow-y-auto rounded-3xl border p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="date-picker-list max-h-80 overflow-y-auto rounded-[var(--radius-lg)] border p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {options.map((option) => {
                   const selected = option.value === draftValue;
 
@@ -125,7 +127,7 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
                       type="button"
                       onClick={() => setDraftValue(option.value)}
                       className={[
-                        "date-picker-option flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-base font-semibold transition",
+                        "date-picker-option flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-base font-semibold transition",
                         selected ? "date-picker-option-selected" : "date-picker-option-unselected",
                       ].join(" ")}
                       aria-pressed={selected}

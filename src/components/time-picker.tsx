@@ -32,7 +32,6 @@ function TimePickerModal({
   maxTime = '23:59',
   stepMinutes = 30,
   initial,
-  light = false,
 }: TimePickerModalProps) {
   const [selected, setSelected] = useState<string | undefined>(initial)
   const firstRef = useRef<HTMLButtonElement | null>(null)
@@ -73,9 +72,9 @@ function TimePickerModal({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="time-picker-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0"
         onClick={onClose}
         aria-hidden
       />
@@ -83,15 +82,13 @@ function TimePickerModal({
       <div
         role="dialog"
         aria-modal="true"
-        className={`z-10 w-80 max-h-[70vh] overflow-auto rounded-lg shadow-lg p-4 mx-4 ${
-          light ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'
-        }`}
+        className="time-picker-dialog z-10 max-h-[70vh] w-full max-w-sm overflow-auto p-4"
       >
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium">Izaberi vreme</h3>
           <button
             onClick={onClose}
-            className="text-sm opacity-80 hover:opacity-100"
+            className="icon-button"
             aria-label="Zatvori"
           >
             ×
@@ -117,12 +114,10 @@ function TimePickerModal({
                   onClose()
                 }}
                 disabled={!allowed}
-                className={`py-2 px-2 rounded text-sm text-center border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                className={`time-picker-option py-2 px-2 text-sm text-center border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   isSel
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : light
-                    ? 'bg-white/5 border-slate-200'
-                    : 'bg-transparent border-slate-700'
+                    ? 'time-picker-option-selected border-[color:var(--primary)]'
+                    : 'time-picker-option-unselected border-[color:var(--border)] bg-transparent'
                 }`}
               >
                 {t}
@@ -134,7 +129,7 @@ function TimePickerModal({
         <div className="flex items-center justify-end gap-2 mt-4">
           <button
             onClick={onClose}
-            className="px-3 py-1 rounded bg-transparent border text-sm"
+            className="time-picker-secondary-action px-3 py-1 text-sm"
           >
             Otkaži
           </button>
@@ -144,7 +139,7 @@ function TimePickerModal({
               onSelect(selected)
               onClose()
             }}
-            className="px-4 py-1 rounded bg-indigo-600 text-white text-sm"
+            className="time-picker-primary-action px-4 py-1 text-sm"
             disabled={!selected}
           >
             Odaberi
@@ -177,13 +172,13 @@ export function TimePicker({ value, onChange, minTime, maxTime, className }: Tim
         type="button"
         onClick={() => setOpen(true)}
         className={[
-          'mt-2 flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-base font-medium shadow-sm outline-none transition focus:border-teal-500',
+          'mt-2 flex w-full items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--input)] px-4 py-3 text-left text-base font-medium text-[color:var(--foreground)] shadow-sm outline-none transition focus:border-[color:var(--primary)]',
           className ?? '',
         ].join(' ')}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <span className={/^\d{2}:\d{2}$/.test(value) ? 'text-slate-900' : 'text-slate-400'}>{displayValue}</span>
+        <span className={/^\d{2}:\d{2}$/.test(value) ? 'text-[color:var(--foreground)]' : 'text-[color:var(--muted-foreground)]'}>{displayValue}</span>
       </button>
 
       <TimePickerModal

@@ -1,9 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import {
+  CalendarCheck,
+  CheckCircle2,
+  ClipboardList,
+  Search,
+  ShieldCheck,
+  Truck,
+  type LucideIcon,
+} from "lucide-react";
 import { LoadingScreen } from "./loading";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
+import { RestaurantCard } from "@/components/restaurant/restaurant-card";
+import { Badge } from "@/components/ui/badge";
+import { LinkButton } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/section-header";
 import type { CityAvailability, Restaurant } from "@/lib/types/restaurant";
 
 let hasShownHomeSplashInRuntime = false;
@@ -15,10 +29,48 @@ const fallbackCities: CityAvailability[] = [
   { name: "Kragujevac", isAvailable: false },
 ];
 
-const metrics = [
-  { value: "7", label: "aktivnih restorana" },
-  { value: "24h", label: "unapred planiranje" },
-  { value: "Email", label: "potvrda porudžbine" },
+const serviceHighlights = [
+  { title: "Restorani i ketering ponude", text: "Pregled aktivnih restorana po gradu, kuhinji i uslovima isporuke." },
+  { title: "Porudžbina sa terminom", text: "Korpa, kontakt podaci, adresa i termin isporuke na jednom mestu." },
+  { title: "Server obračun cena", text: "Ukupan iznos se proverava na serveru pre čuvanja narudžbine." },
+];
+
+const cateringCategories = ["Poslovni ručkovi", "Sastanci", "Radionice", "Privatni događaji", "Timska okupljanja"];
+
+const processSteps: Array<{ icon: LucideIcon; title: string; text: string }> = [
+  {
+    icon: ClipboardList,
+    title: "Izaberi ponudu",
+    text: "Pregledaj restorane po gradu, kuhinji, vremenu isporuke i minimalnoj porudžbini.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Sastavi korpu",
+    text: "Dodaj jela, uskladi količine i izaberi termin koji odgovara događaju.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Dobij potvrdu",
+    text: "Nakon slanja porudžbine dobijaš pregled narudžbine i osnovne detalje isporuke.",
+  },
+];
+
+const benefitCards: Array<{ icon: LucideIcon; title: string; text: string }> = [
+  {
+    icon: Truck,
+    title: "Jasni uslovi isporuke",
+    text: "Prikaz minimalne porudžbine, dostave i procenjenog vremena isporuke.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Pouzdan obračun",
+    text: "Frontend ne šalje ukupan iznos kao izvor istine; server računa cene.",
+  },
+  {
+    icon: Search,
+    title: "Brži izbor",
+    text: "Korisnik može brzo da uporedi dostupne restorane pre ulaska u meni.",
+  },
 ];
 
 export default function Home() {
@@ -166,65 +218,56 @@ export default function Home() {
     <main className="site-shell min-h-screen">
       <div className="page-bg" />
 
-      <section className="mx-auto w-full max-w-7xl px-4 pb-16 pt-5 sm:px-8 lg:px-10">
-        <header className="site-nav reveal-up">
-          <Link href="/" className="brand-lockup" aria-label="KeteringGo početna">
-            <Image
-              src="/ketering-logo-20260418.png"
-              alt=""
-              width={180}
-              height={90}
-              unoptimized
-              priority
-              className="brand-mark"
-            />
-            <span className="brand-copy">
-              <span className="brand-name">KeteringGo</span>
-              <span className="brand-line">Ketering za firme i događaje</span>
-            </span>
-          </Link>
+      <section className="site-container pb-16">
+        <SiteHeader />
 
-          <nav className="site-nav-links" aria-label="Glavna navigacija">
-            <Link href="/restorani">Restorani</Link>
-            <a href="#ponuda">Ponuda</a>
-          </nav>
-        </header>
-
-        <section className="hero-grid mt-8">
+        <section className="hero-grid pt-8">
           <article className="hero-card reveal-up delay-1">
-            <span className="eyebrow">Centralizovano poručivanje keteringa</span>
-            <h1 className="mt-5 font-brand text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl">
-              Ketering za timove, sastanke i privatne događaje.
+            <Badge tone="primary" className="w-fit">
+              <ShieldCheck aria-hidden="true" size={14} />
+              Organizovano poručivanje keteringa
+            </Badge>
+            <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              Ketering za firme, događaje i privatne proslave u dostupnim gradovima.
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Izaberi grad, uporedi proverene restorane, složi korpu i pošalji porudžbinu. Kupac dobija email potvrdu
-              sa svim detaljima narudžbine.
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[color:var(--muted-foreground)] sm:text-lg">
+              Izaberi grad, uporedi restorane, sastavi korpu i pošalji porudžbinu za kancelariju, sastanak ili događaj.
+              Finalna cena se proverava na serveru pre potvrde.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a href="#ponuda" className="cta-main inline-flex items-center justify-center">
+              <LinkButton href="#ponuda">
+                <Search aria-hidden="true" size={18} />
                 Pronađi restoran
-              </a>
-              <Link href="/restorani" className="cta-secondary inline-flex items-center justify-center">
+              </LinkButton>
+              <LinkButton href="/restorani" variant="outline">
                 Svi restorani
-              </Link>
+              </LinkButton>
             </div>
 
             <div className="metric-grid mt-10">
-              {metrics.map((metric) => (
-                <div key={metric.label} className="metric-card">
-                  <strong>{metric.value}</strong>
-                  <span>{metric.label}</span>
+              {serviceHighlights.map((item) => (
+                <div key={item.title} className="metric-card">
+                  <strong>{item.title}</strong>
+                  <span>{item.text}</span>
                 </div>
               ))}
             </div>
           </article>
 
           <aside className="selection-card reveal-up delay-2">
-            <div className="panel-heading">
-              <span className="eyebrow">Lokacija</span>
-              <h2 className="font-brand text-2xl font-semibold">Proveri dostupnost</h2>
+            <div className="relative mb-6 aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)]">
+              <Image
+                src={popularRestaurants[0]?.cover ?? "/placeholders/cover.svg"}
+                alt={popularRestaurants[0] ? `Ketering ponuda restorana ${popularRestaurants[0].name}` : "Ketering ponuda hrane"}
+                fill
+                priority
+                sizes="(max-width: 960px) 100vw, 380px"
+                className="object-cover"
+              />
             </div>
+            <span className="eyebrow">Lokacija</span>
+            <h2 className="mt-2 text-2xl font-semibold">Proveri dostupnost isporuke</h2>
 
             <label htmlFor="city" className="field mt-6">
               Grad isporuke
@@ -268,73 +311,35 @@ export default function Home() {
         </section>
 
         <section id="ponuda" className="mt-12 sm:mt-16">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Aktuelna ponuda</span>
-              <h2 className="font-brand text-3xl font-semibold tracking-tight sm:text-4xl">
-                Najbolje ocenjeni restorani u gradu: {selectedCity}
-              </h2>
-            </div>
-            {isCityAvailable ? (
-              <Link href="/restorani" className="cta-ghost inline-flex items-center justify-center">
-                Cela ponuda
-              </Link>
-            ) : null}
-          </div>
+          <SectionHeader
+            eyebrow="Aktuelna ponuda"
+            title={`Restorani u gradu: ${selectedCity}`}
+            description="Pregled dostupnih restorana sa osnovnim uslovima isporuke i linkom ka meniju."
+            action={isCityAvailable ? <LinkButton href="/restorani" variant="ghost">Cela ponuda</LinkButton> : null}
+          />
 
           {loadError ? (
-            <p className="mt-5 rounded-2xl bg-rose-100 px-4 py-3 text-sm font-medium text-rose-900">{loadError}</p>
+            <p className="mt-5 rounded-[var(--radius-lg)] bg-[color:var(--destructive-surface)] px-4 py-3 text-sm font-medium text-[color:var(--destructive)]">
+              {loadError}
+            </p>
           ) : null}
 
           <div className="mt-6 grid gap-5 lg:grid-cols-3">
             {isLoadingCities || (isCityAvailable && isLoadingRestaurants) ? (
-              <article className="surface-panel rounded-3xl p-6 lg:col-span-3">
-                <p className="text-sm font-semibold text-slate-700">Učitavanje ponude restorana...</p>
+              <article className="surface-panel lg:col-span-3">
+                <p className="text-sm font-semibold text-[color:var(--foreground)]">Učitavanje ponude restorana...</p>
+                <div className="loading-line mt-4" aria-hidden="true" />
               </article>
             ) : isCityAvailable && popularRestaurants.length > 0 ? (
               popularRestaurants.map((restaurant, index) => (
-                <article
-                  key={restaurant.id}
-                  className="restaurant-card reveal-up"
-                  style={{ animationDelay: `${120 + index * 80}ms` }}
-                >
-                  <div className="relative h-44 overflow-hidden">
-                    <Image
-                      src={restaurant.cover}
-                      alt={restaurant.name}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 33vw"
-                      className="object-cover"
-                    />
-                    <div className="image-scrim" />
-                    <span className="rating-pill">{restaurant.rating}</span>
-                  </div>
-
-                  <div className="space-y-4 p-5">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                        {restaurant.cuisine}
-                      </p>
-                      <h3 className="mt-1 font-brand text-xl font-semibold">{restaurant.name}</h3>
-                    </div>
-                    <p className="line-clamp-2 text-sm leading-6 text-slate-600">{restaurant.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="tag">{restaurant.eta}</span>
-                      <span className="tag">Dostava {restaurant.deliveryFee}</span>
-                    </div>
-                    <Link
-                      href={`/restorani/${restaurant.id}`}
-                      className="cta-main inline-flex w-full items-center justify-center"
-                    >
-                      Pogledaj meni
-                    </Link>
-                  </div>
-                </article>
+                <div key={restaurant.id} className="reveal-up" style={{ animationDelay: `${120 + index * 80}ms` }}>
+                  <RestaurantCard restaurant={restaurant} priority={index === 0} />
+                </div>
               ))
             ) : (
-              <article className="surface-panel rounded-3xl p-7 lg:col-span-3">
-                <h3 className="font-brand text-2xl font-semibold">Usluga trenutno nije dostupna u ovom gradu.</h3>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              <article className="surface-panel lg:col-span-3">
+                <h3 className="text-2xl font-semibold">Usluga trenutno nije dostupna u ovom gradu.</h3>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted-foreground)]">
                   KeteringGo trenutno radi sa restoranima u dostupnim gradovima. Izaberi Beograd za kompletan demo tok
                   poručivanja.
                 </p>
@@ -343,19 +348,62 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-12 grid gap-5 md:grid-cols-3">
-          {[
-            ["Izaberi ponudu", "Pregledaj restorane po gradu, kuhinji, vremenu isporuke i minimalnoj porudžbini."],
-            ["Sastavi korpu", "Dodaj jela, uskladi količine i izaberi termin koji odgovara događaju."],
-            ["Dobij potvrdu", "Nakon slanja porudžbine dobijaš pregled narudžbine i osnovne detalje isporuke."],
-          ].map(([title, text]) => (
-            <article key={title} className="surface-panel reveal-up rounded-3xl p-6">
-              <h3 className="font-brand text-xl font-semibold">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{text}</p>
+        <section id="kako-funkcionise" className="mt-16">
+          <SectionHeader
+            eyebrow="Kako funkcioniše"
+            title="Jednostavan tok od izbora restorana do potvrde porudžbine"
+          />
+          <div className="mt-6 grid gap-5 md:grid-cols-3">
+          {processSteps.map(({ icon: Icon, title, text }) => (
+            <article key={title} className="surface-panel reveal-up">
+              <Icon aria-hidden="true" className="text-[color:var(--primary)]" size={24} />
+              <h3 className="mt-4 text-xl font-semibold">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-[color:var(--muted-foreground)]">{text}</p>
+            </article>
+          ))}
+          </div>
+        </section>
+
+        <section className="mt-16">
+          <SectionHeader
+            eyebrow="Vrste keteringa"
+            title="Ponude za poslovne i privatne prilike"
+            description="Kategorije pomažu korisniku da brže proceni da li restoran odgovara formatu događaja."
+          />
+          <div className="mt-6 flex flex-wrap gap-2">
+            {cateringCategories.map((category) => (
+              <Badge key={category} tone="primary">{category}</Badge>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-16 grid gap-5 md:grid-cols-3">
+          {benefitCards.map(({ icon: Icon, title, text }) => (
+            <article key={title} className="surface-panel">
+              <Icon aria-hidden="true" className="text-[color:var(--primary)]" size={24} />
+              <h3 className="mt-4 text-lg font-semibold">{title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[color:var(--muted-foreground)]">{text}</p>
             </article>
           ))}
         </section>
+
+        <section id="faq" className="mt-16">
+          <SectionHeader eyebrow="FAQ" title="Česta pitanja" />
+          <div className="mt-6 grid gap-3">
+            {[
+              ["Da li je usluga dostupna u svim gradovima?", "Ne. Izbor grada na početnoj prikazuje da li je poručivanje trenutno dostupno."],
+              ["Da li se ukupna cena računa u browseru?", "Prikaz u browseru je informativan; finalna cena se ponovo računa na serveru."],
+              ["Kako kupac dobija potvrdu?", "Nakon uspešne narudžbine aplikacija pokušava slanje email potvrde na unetu adresu."],
+            ].map(([question, answer]) => (
+              <details key={question} className="surface-panel">
+                <summary className="cursor-pointer text-base font-semibold text-[color:var(--foreground)]">{question}</summary>
+                <p className="mt-3 text-sm leading-6 text-[color:var(--muted-foreground)]">{answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
       </section>
+      <SiteFooter />
     </main>
   );
 }

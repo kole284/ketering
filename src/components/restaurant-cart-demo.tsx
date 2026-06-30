@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import { type FormEvent, useMemo, useState } from "react";
+import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { DatePicker } from "@/components/date-picker";
 import { TimePicker } from "@/components/time-picker";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { Restaurant } from "@/lib/types/restaurant";
 import { isOrderDateWithinBounds } from "@/lib/order-date";
 import {
@@ -204,11 +207,12 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
             <span className="eyebrow">Meni</span>
             <h2 className="mt-2 font-brand text-2xl font-semibold">Dodaj stavke u korpu</h2>
           </div>
-          <span className="tag">
-            {totalCount} stavki
-          </span>
+            <Badge tone="primary">
+              <ShoppingBag aria-hidden="true" size={14} />
+              {totalCount} stavki
+            </Badge>
         </div>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-[color:var(--muted-foreground)]">
           Izaberi proizvode i količine. Finalni iznos se računa pre slanja porudžbine.
         </p>
 
@@ -234,7 +238,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
             return (
               <div
                 key={product.name}
-                className="flex min-w-0 flex-col gap-3 rounded-2xl bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4"
+                className="flex min-w-0 flex-col gap-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <Image
@@ -242,11 +246,11 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                     alt={product.name}
                     width={64}
                     height={64}
-                    className="h-16 w-16 rounded-xl object-cover"
+                    className="h-16 w-16 rounded-[var(--radius-md)] object-cover"
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-800">{product.name}</p>
-                    <p className="text-xs text-slate-600">{product.price}</p>
+                    <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{product.name}</p>
+                    <p className="text-xs text-[color:var(--muted-foreground)]">{product.price}</p>
                   </div>
                 </div>
 
@@ -257,15 +261,15 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                     aria-label={`Smanji količinu za ${product.name}`}
                     disabled={quantity === 0}
                   >
-                    -
+                    <Minus aria-hidden="true" size={16} />
                   </button>
-                  <span className="w-6 text-center text-sm font-bold text-slate-800">{quantity}</span>
+                  <span className="w-6 text-center text-sm font-bold text-[color:var(--foreground)]">{quantity}</span>
                   <button
                     onClick={() => addToCart(product.name)}
                     className="chip inline-flex h-8 w-8 items-center justify-center p-0 text-base leading-none sm:h-9 sm:w-9 sm:text-lg"
                     aria-label={`Povećaj količinu za ${product.name}`}
                   >
-                    +
+                    <Plus aria-hidden="true" size={16} />
                   </button>
                 </div>
               </div>
@@ -274,16 +278,16 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
         </div>
 
         <div className="mt-6 grid gap-4">
-          <div className="surface-panel rounded-2xl p-4">
+          <div className="surface-panel">
             <h3 className="mb-2 text-lg font-semibold">Preporučujemo</h3>
-            <p className="mb-3 text-sm text-slate-600">Popularne stavke iz menija za brže sastavljanje porudžbine.</p>
+            <p className="mb-3 text-sm text-[color:var(--muted-foreground)]">Popularne stavke iz menija za brže sastavljanje porudžbine.</p>
             <div className="grid gap-2">
               {restaurant.products.slice(0, 3).map((p) => (
-                <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-2">
-                  <Image src={p.image} alt={p.name} width={48} height={48} className="h-12 w-12 rounded-md object-cover" />
+                <div key={p.id} className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface)] p-2">
+                  <Image src={p.image} alt={p.name} width={48} height={48} className="h-12 w-12 rounded-[var(--radius-sm)] object-cover" />
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-slate-800">{p.name}</div>
-                    <div className="text-xs text-slate-500">{p.price}</div>
+                    <div className="truncate text-sm font-medium text-[color:var(--foreground)]">{p.name}</div>
+                    <div className="text-xs text-[color:var(--muted-foreground)]">{p.price}</div>
                   </div>
                   <div className="ml-auto">
                     <button
@@ -309,28 +313,28 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
         <p className="mt-1 text-sm text-slate-600">Unesi podatke za isporuku i dobićeš pregled porudžbine.</p>
 
         {cartItems.length === 0 ? (
-          <div className="mt-5 rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">
+            <div className="mt-5 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 text-sm text-[color:var(--muted-foreground)]">
             Korpa je trenutno prazna. Dodaj stavke iz menija da prikažeš pun tok porudžbine.
           </div>
         ) : (
           <div className="mt-5 max-h-64 space-y-3 overflow-y-auto pr-1 xl:max-h-72">
             {cartItems.map((item) => (
-              <div key={item.name} className="rounded-2xl border border-slate-200 bg-white p-3">
+              <div key={item.name} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
                 <div className="flex min-w-0 items-start justify-between gap-2">
-                  <p className="min-w-0 truncate pr-2 text-sm font-semibold text-slate-800">{item.name}</p>
-                  <p className="shrink-0 text-sm font-bold text-slate-900">
+                  <p className="min-w-0 truncate pr-2 text-sm font-semibold text-[color:var(--foreground)]">{item.name}</p>
+                  <p className="shrink-0 text-sm font-bold text-[color:var(--foreground)]">
                     {formatRsd(item.unitPrice * item.quantity)}
                   </p>
                 </div>
                 <div className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
-                  <p className="truncate pr-2 text-xs text-slate-500">{item.price} po komadu</p>
+                  <p className="truncate pr-2 text-xs text-[color:var(--muted-foreground)]">{item.price} po komadu</p>
                   <div className="flex shrink-0 items-center gap-2">
                     <button
                       onClick={() => updateQuantity(item.name, -1)}
                       className="chip inline-flex h-8 w-8 items-center justify-center p-0 text-base leading-none"
                       aria-label={`Umanji ${item.name}`}
                     >
-                      -
+                      <Minus aria-hidden="true" size={15} />
                     </button>
                     <span className="w-5 text-center text-sm font-bold">{item.quantity}</span>
                     <button
@@ -338,7 +342,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                       className="chip inline-flex h-8 w-8 items-center justify-center p-0 text-base leading-none"
                       aria-label={`Uvećaj ${item.name}`}
                     >
-                      +
+                      <Plus aria-hidden="true" size={15} />
                     </button>
                   </div>
                 </div>
@@ -432,30 +436,30 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
             />
           </label>
 
-          <div className="space-y-2 rounded-2xl bg-slate-50 p-4 text-sm">
+          <div className="space-y-2 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-slate-600">Međuzbir</span>
-              <span className="font-semibold text-slate-900">{formatRsd(subtotal)}</span>
+              <span className="text-[color:var(--muted-foreground)]">Međuzbir</span>
+              <span className="font-semibold text-[color:var(--foreground)]">{formatRsd(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-600">Dostava</span>
-              <span className="font-semibold text-slate-900">
+              <span className="text-[color:var(--muted-foreground)]">Dostava</span>
+              <span className="font-semibold text-[color:var(--foreground)]">
                 {cartItems.length ? restaurant.deliveryFee : "0 RSD"}
               </span>
             </div>
-            <div className="h-px bg-slate-200" />
+            <div className="h-px bg-[color:var(--border)]" />
             <div className="flex items-center justify-between text-base">
-              <span className="font-bold text-slate-900">Ukupno</span>
-              <span className="font-bold text-slate-900">{formatRsd(total)}</span>
+              <span className="font-bold text-[color:var(--foreground)]">Ukupno</span>
+              <span className="font-bold text-[color:var(--foreground)]">{formatRsd(total)}</span>
             </div>
           </div>
 
           {submitError ? (
-            <p className="rounded-2xl bg-rose-100 px-4 py-3 text-sm font-medium text-rose-900">{submitError}</p>
+            <p className="rounded-[var(--radius-lg)] bg-[color:var(--destructive-surface)] px-4 py-3 text-sm font-medium text-[color:var(--destructive)]">{submitError}</p>
           ) : null}
 
           {submitSuccess ? (
-            <p className="rounded-2xl bg-emerald-100 px-4 py-3 text-sm font-medium text-emerald-900">
+            <p className="rounded-[var(--radius-lg)] bg-[color:var(--success-surface)] px-4 py-3 text-sm font-medium text-[color:var(--success)]">
               {submitSuccess}
             </p>
           ) : null}
@@ -470,12 +474,13 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
           ) : null}
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <button className="cta-main" type="submit" disabled={!canSubmitOrder}>
+            <Button type="submit" disabled={!canSubmitOrder} isLoading={isSubmitting}>
               {isSubmitting ? "Šaljem..." : "Pošalji porudžbinu"}
-            </button>
-            <button className="cta-secondary" type="button" onClick={clearCheckout} disabled={!cartItems.length || isSubmitting}>
+            </Button>
+            <Button variant="outline" type="button" onClick={clearCheckout} disabled={!cartItems.length || isSubmitting}>
+              <Trash2 aria-hidden="true" size={16} />
               Isprazni korpu
-            </button>
+            </Button>
           </div>
         </form>
         </div>

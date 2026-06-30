@@ -215,6 +215,34 @@ button:disabled,
   color: var(--foreground);
 }
 
+.site-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon-button {
+  position: relative;
+  display: inline-flex;
+  min-height: 2.5rem;
+  min-width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  color: var(--foreground);
+  font-size: 0.82rem;
+  font-weight: 720;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.icon-button:hover {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  background: var(--surface);
+}
+
 .hero-grid {
   display: grid;
   gap: 1.25rem;
@@ -399,17 +427,20 @@ button:disabled,
   padding: 0.45rem 0.65rem;
 }
 
-.cta-main,
-.cta-secondary,
-.cta-ghost,
+.btn,
 .chip,
 .date-picker-primary-action,
 .date-picker-secondary-action,
 .time-picker-primary-action,
 .time-picker-secondary-action {
+  display: inline-flex;
   min-height: 2.65rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   border-radius: var(--radius-md);
   font-weight: 720;
+  line-height: 1;
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
@@ -418,6 +449,7 @@ button:disabled,
     box-shadow var(--transition-fast);
 }
 
+.btn-primary,
 .cta-main {
   border: 1px solid var(--primary);
   background: var(--primary);
@@ -426,10 +458,12 @@ button:disabled,
   box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
+.btn-primary:hover,
 .cta-main:hover {
   background: var(--primary-hover);
 }
 
+.btn-secondary,
 .cta-secondary {
   border: 1px solid var(--border);
   background: var(--surface-elevated);
@@ -437,19 +471,50 @@ button:disabled,
   padding: 0.7rem 1.05rem;
 }
 
+.btn-secondary:hover,
 .cta-secondary:hover {
   border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
   background: var(--surface);
 }
 
+.btn-outline {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  padding: 0.7rem 1rem;
+}
+
+.btn-outline:hover {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  background: var(--surface);
+}
+
+.btn-ghost,
 .cta-ghost {
   background: transparent;
   color: var(--primary);
   padding: 0.7rem 0.9rem;
 }
 
+.btn-ghost:hover,
 .cta-ghost:hover {
   background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.btn-destructive {
+  border: 1px solid var(--destructive);
+  background: var(--destructive);
+  color: #ffffff;
+  padding: 0.7rem 1rem;
+}
+
+.btn-link {
+  min-height: auto;
+  background: transparent;
+  color: var(--primary);
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .chip {
@@ -464,11 +529,51 @@ button:disabled,
   background: color-mix(in srgb, var(--primary) 8%, var(--surface));
 }
 
-.cta-main:active,
-.cta-secondary:active,
-.cta-ghost:active,
+.btn:active,
 .chip:active {
   transform: translateY(1px);
+}
+
+.badge {
+  display: inline-flex;
+  min-height: 1.8rem;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 0.42rem 0.58rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.badge-neutral {
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+.badge-primary {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--primary);
+}
+
+.badge-success {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--border));
+  background: var(--success-surface);
+  color: var(--success);
+}
+
+.badge-warning {
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--border));
+  background: var(--warning-surface);
+  color: var(--warning);
+}
+
+.badge-destructive {
+  border-color: color-mix(in srgb, var(--destructive) 28%, var(--border));
+  background: var(--destructive-surface);
+  color: var(--destructive);
 }
 
 .field {
