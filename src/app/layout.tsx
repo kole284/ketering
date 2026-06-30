@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { DM_Sans, Space_Grotesk } from "next/font/google";
+import { Geist } from "next/font/google";
 import ThemeToggle from "@/components/theme-toggle";
 import Script from "next/script";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
@@ -37,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="sr"
-      className={`${dmSans.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`${geist.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
