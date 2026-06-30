@@ -29,7 +29,7 @@ export function SiteHeader({ cartCount = 0 }: SiteHeaderProps) {
       <nav className="site-nav-links" aria-label="Glavna navigacija">
         <Link href="/restorani">Restorani</Link>
         <Link href="/#kako-funkcionise">Kako funkcioniše</Link>
-        <Link href="/#faq">FAQ</Link>
+        <Link href="/faq">FAQ</Link>
       </nav>
 
       <div className="site-nav-actions">

@@ -11,7 +11,7 @@ export function SiteFooter() {
         <nav className="flex flex-wrap gap-4" aria-label="Footer navigacija">
           <Link href="/restorani">Restorani</Link>
           <Link href="/#kako-funkcionise">Kako funkcioniše</Link>
-          <Link href="/#faq">FAQ</Link>
+          <Link href="/faq">FAQ</Link>
         </nav>
       </div>
     </footer>

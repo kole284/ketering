@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { LoadingScreen } from "./loading";
+import { FeaturedFaq } from "@/components/faq/featured-faq";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { RestaurantCard } from "@/components/restaurant/restaurant-card";
@@ -387,21 +388,7 @@ export default function Home() {
           ))}
         </section>
 
-        <section id="faq" className="mt-16">
-          <SectionHeader eyebrow="FAQ" title="Česta pitanja" />
-          <div className="mt-6 grid gap-3">
-            {[
-              ["Da li je usluga dostupna u svim gradovima?", "Ne. Izbor grada na početnoj prikazuje da li je poručivanje trenutno dostupno."],
-              ["Da li se ukupna cena računa u browseru?", "Prikaz u browseru je informativan; finalna cena se ponovo računa na serveru."],
-              ["Kako kupac dobija potvrdu?", "Nakon uspešne narudžbine aplikacija pokušava slanje email potvrde na unetu adresu."],
-            ].map(([question, answer]) => (
-              <details key={question} className="surface-panel">
-                <summary className="cursor-pointer text-base font-semibold text-[color:var(--foreground)]">{question}</summary>
-                <p className="mt-3 text-sm leading-6 text-[color:var(--muted-foreground)]">{answer}</p>
-              </details>
-            ))}
-          </div>
-        </section>
+        <FeaturedFaq />
       </section>
       <SiteFooter />
     </main>
