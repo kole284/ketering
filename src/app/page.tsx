@@ -11,7 +11,6 @@ import {
   Truck,
   type LucideIcon,
 } from "lucide-react";
-import { LoadingScreen } from "./loading";
 import { FeaturedFaq } from "@/components/faq/featured-faq";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -20,15 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
 import type { CityAvailability, Restaurant } from "@/lib/types/restaurant";
-
-let hasShownHomeSplashInRuntime = false;
-
-const fallbackCities: CityAvailability[] = [
-  { name: "Beograd", isAvailable: true },
-  { name: "Novi Sad", isAvailable: false },
-  { name: "Niš", isAvailable: false },
-  { name: "Kragujevac", isAvailable: false },
-];
 
 const serviceHighlights = [
   { title: "Restorani i ketering ponude", text: "Pregled aktivnih restorana po gradu, kuhinji i uslovima isporuke." },
@@ -76,17 +66,13 @@ const benefitCards: Array<{ icon: LucideIcon; title: string; text: string }> = [
 
 export default function Home() {
   const [cities, setCities] = useState<CityAvailability[]>([]);
-  const [selectedCity, setSelectedCity] = useState<string>(fallbackCities[0].name);
+  const [selectedCity, setSelectedCity] = useState<string>("");
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(true);
-  const [shouldShowEntrySplash] = useState(() => !hasShownHomeSplashInRuntime);
-  const [hasMinimumSplashDurationElapsed, setHasMinimumSplashDurationElapsed] = useState(
-    () => hasShownHomeSplashInRuntime,
-  );
   const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const cityOptions = cities.length > 0 ? cities : fallbackCities;
+  const cityOptions = cities;
 
   const selectedCityEntry = useMemo(
     () => cityOptions.find((city) => city.name === selectedCity),
@@ -94,20 +80,6 @@ export default function Home() {
   );
 
   const isCityAvailable = selectedCityEntry?.isAvailable ?? false;
-
-  useEffect(() => {
-    if (!shouldShowEntrySplash) {
-      return;
-    }
-
-    hasShownHomeSplashInRuntime = true;
-
-    const timeoutId = window.setTimeout(() => {
-      setHasMinimumSplashDurationElapsed(true);
-    }, 1100);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [shouldShowEntrySplash]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -126,7 +98,7 @@ export default function Home() {
         }
 
         const data = (await response.json()) as CityAvailability[];
-        const nextCities = data.length > 0 ? data : fallbackCities;
+        const nextCities = data;
 
         setCities(nextCities);
         setSelectedCity((prev) => {
@@ -134,8 +106,8 @@ export default function Home() {
             return prev;
           }
 
-          const preferred = nextCities.find((city) => city.name === "Beograd");
-          return preferred?.name ?? nextCities[0].name;
+          const preferred = nextCities.find((city) => city.isAvailable) ?? nextCities[0];
+          return preferred?.name ?? "";
         });
       } catch (error) {
         if (controller.signal.aborted) {
@@ -144,8 +116,8 @@ export default function Home() {
 
         console.error(error);
         setLoadError("Trenutno ne možemo da učitamo gradove. Pokušaj osvežavanje stranice.");
-        setCities(fallbackCities);
-        setSelectedCity("Beograd");
+        setCities([]);
+        setSelectedCity("");
       } finally {
         if (!controller.signal.aborted) {
           setIsLoadingCities(false);
@@ -211,10 +183,6 @@ export default function Home() {
       .slice(0, 3);
   }, [isCityAvailable, restaurants]);
 
-  if (shouldShowEntrySplash && (isLoadingCities || !hasMinimumSplashDurationElapsed)) {
-    return <LoadingScreen />;
-  }
-
   return (
     <main className="site-shell min-h-screen">
       <div className="page-bg" />
@@ -277,7 +245,11 @@ export default function Home() {
                 value={selectedCity}
                 onChange={(event) => setSelectedCity(event.target.value)}
                 className="control-input"
+                disabled={cityOptions.length === 0}
               >
+                {cityOptions.length === 0 ? (
+                  <option value="">Nema dostupnih gradova</option>
+                ) : null}
                 {cityOptions.map((city) => (
                   <option key={city.name} value={city.name}>
                     {city.name}

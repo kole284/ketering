@@ -8,7 +8,15 @@ import { TimePicker } from "@/components/time-picker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Restaurant } from "@/lib/types/restaurant";
+import {
+  addCartItem,
+  buildCartItems,
+  calculateSubtotalRsd,
+  updateCartQuantity,
+  type CartState,
+} from "@/lib/cart";
 import { isOrderDateWithinBounds } from "@/lib/order-date";
+import { formatRsd } from "@/lib/utils/money";
 import {
   formatWorkingHoursLabel,
   getRestaurantOrderTimeBounds,
@@ -18,8 +26,6 @@ import {
 type RestaurantCartDemoProps = {
   restaurant: Restaurant;
 };
-
-type CartState = Record<string, number>;
 
 type CheckoutFormState = {
   customerName: string;
@@ -41,14 +47,6 @@ const initialCheckoutForm: CheckoutFormState = {
   note: "",
 };
 
-function parseRsdPrice(price: string): number {
-  return Number(price.replace(/\./g, "").replace(" RSD", ""));
-}
-
-function formatRsd(value: number): string {
-  return new Intl.NumberFormat("sr-RS").format(value) + " RSD";
-}
-
 export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoProps) {
   const [cart, setCart] = useState<CartState>({});
   const [checkoutForm, setCheckoutForm] = useState<CheckoutFormState>(initialCheckoutForm);
@@ -57,50 +55,27 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [fallbackSmsLink, setFallbackSmsLink] = useState<string | null>(null);
 
-  const addToCart = (productName: string) => {
-    setCart((prev) => ({
-      ...prev,
-      [productName]: (prev[productName] ?? 0) + 1,
-    }));
+  const addToCart = (productId: number) => {
+    setCart((prev) => addCartItem(prev, productId));
   };
 
-  const updateQuantity = (productName: string, delta: number) => {
-    setCart((prev) => {
-      const current = prev[productName] ?? 0;
-      const next = Math.max(0, current + delta);
-
-      if (next === 0) {
-        const nextCart = { ...prev };
-        delete nextCart[productName];
-        return nextCart;
-      }
-
-      return {
-        ...prev,
-        [productName]: next,
-      };
-    });
+  const updateQuantity = (productId: number, delta: number) => {
+    setCart((prev) => updateCartQuantity(prev, productId, delta));
   };
 
   const cartItems = useMemo(() => {
-    return restaurant.products
-      .filter((product) => (cart[product.name] ?? 0) > 0)
-      .map((product) => ({
-        ...product,
-        quantity: cart[product.name],
-        unitPrice: parseRsdPrice(product.price),
-      }));
+    return buildCartItems(restaurant.products, cart);
   }, [cart, restaurant.products]);
 
   const subtotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+    () => calculateSubtotalRsd(cartItems),
     [cartItems],
   );
 
-  const deliveryFee = parseRsdPrice(restaurant.deliveryFee);
+  const deliveryFee = restaurant.deliveryFeeRsd;
   const total = subtotal + (cartItems.length ? deliveryFee : 0);
   const totalCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const orderTimeBounds = getRestaurantOrderTimeBounds(restaurant);
+  const orderTimeBounds = getRestaurantOrderTimeBounds(restaurant, checkoutForm.eventDate || undefined);
 
   const canSubmitOrder =
     cartItems.length > 0 &&
@@ -109,7 +84,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
     checkoutForm.customerPhone.trim().length >= 6 &&
     checkoutForm.eventAddress.trim().length >= 5 &&
     isOrderDateWithinBounds(checkoutForm.eventDate) &&
-    isTimeWithinRestaurantHours(restaurant, checkoutForm.eventTime) &&
+    isTimeWithinRestaurantHours(restaurant, checkoutForm.eventDate, checkoutForm.eventTime) &&
     !isSubmitting;
 
   const updateCheckoutField = <K extends keyof CheckoutFormState>(key: K, value: CheckoutFormState[K]) => {
@@ -143,6 +118,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Idempotency-Key": crypto.randomUUID(),
         },
         body: JSON.stringify({
           restaurantId: restaurant.id,
@@ -163,33 +139,38 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
       });
 
       const data = (await response.json()) as {
-        message?: string;
-        id?: number;
-        smsDelivery?: string;
-        smsLink?: string;
-        smsRecipient?: string;
-        emailDelivery?: string;
-        emailMessage?: string;
-        customerPhone?: string;
-        customerEmail?: string;
+        success?: boolean;
+        data?: {
+          id?: number;
+          smsDelivery?: string;
+          smsLink?: string;
+          smsRecipient?: string;
+          emailDelivery?: string;
+          emailMessage?: string;
+        };
+        error?: {
+          message?: string;
+        };
       };
 
       if (!response.ok) {
-        throw new Error(data.message ?? "Naručivanje nije uspelo.");
+        throw new Error(data.error?.message ?? "Naručivanje nije uspelo.");
       }
 
-      if (data.smsDelivery === "composer" && data.smsLink) {
+      const result = data.data;
+
+      if (result?.smsLink) {
         clearCheckout();
-        setFallbackSmsLink(data.smsLink);
+        setFallbackSmsLink(result.smsLink);
         setSubmitSuccess(
-          `Narudžbina #${data.id} je sačuvana. Email status: ${data.emailMessage ?? "nije poslat"}. Klikni na dugme ispod ako želiš ručno da otvoriš SMS poruku.`,
+          `Narudžbina #${result.id} je sačuvana. Email status: ${result.emailMessage ?? "nije poslat"}. Klikni na dugme ispod ako želiš ručno da otvoriš SMS poruku.`,
         );
         return;
       }
 
       clearCheckout();
       setSubmitSuccess(
-        `Narudžbina #${data.id} je poslata. SMS potvrda je otišla na ${data.smsRecipient ?? "+381605581104"}. Email: ${data.emailMessage ?? "bez dodatne potvrde"}.`,
+        `Narudžbina #${result?.id} je sačuvana. SMS: ${result?.smsDelivery ?? "nije poslat"}. Email: ${result?.emailMessage ?? "bez dodatne potvrde"}.`,
       );
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Naručivanje nije uspelo.");
@@ -233,11 +214,11 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
 
         <div className="mt-5 space-y-3">
           {restaurant.products.map((product) => {
-            const quantity = cart[product.name] ?? 0;
+            const quantity = cart[product.id] ?? 0;
 
             return (
               <div
-                key={product.name}
+                key={product.id}
                 className="flex min-w-0 flex-col gap-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
@@ -250,13 +231,13 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                   />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{product.name}</p>
-                    <p className="text-xs text-[color:var(--muted-foreground)]">{product.price}</p>
+                    <p className="text-xs text-[color:var(--muted-foreground)]">{formatRsd(product.priceRsd)}</p>
                   </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1.5 self-end sm:self-auto sm:gap-2">
                   <button
-                    onClick={() => updateQuantity(product.name, -1)}
+                    onClick={() => updateQuantity(product.id, -1)}
                     className="chip inline-flex h-8 w-8 items-center justify-center p-0 text-base leading-none sm:h-9 sm:w-9 sm:text-lg"
                     aria-label={`Smanji količinu za ${product.name}`}
                     disabled={quantity === 0}
@@ -265,7 +246,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                   </button>
                   <span className="w-6 text-center text-sm font-bold text-[color:var(--foreground)]">{quantity}</span>
                   <button
-                    onClick={() => addToCart(product.name)}
+                    onClick={() => addToCart(product.id)}
                     className="chip inline-flex h-8 w-8 items-center justify-center p-0 text-base leading-none sm:h-9 sm:w-9 sm:text-lg"
                     aria-label={`Povećaj količinu za ${product.name}`}
                   >
@@ -287,11 +268,11 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                   <Image src={p.image} alt={p.name} width={48} height={48} className="h-12 w-12 rounded-[var(--radius-sm)] object-cover" />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-[color:var(--foreground)]">{p.name}</div>
-                    <div className="text-xs text-[color:var(--muted-foreground)]">{p.price}</div>
+                    <div className="text-xs text-[color:var(--muted-foreground)]">{formatRsd(p.priceRsd)}</div>
                   </div>
                   <div className="ml-auto">
                     <button
-                      onClick={() => addToCart(p.name)}
+                      onClick={() => addToCart(p.id)}
                       className="chip inline-flex h-8 items-center justify-center px-3"
                       aria-label={`Dodaj ${p.name}`}
                     >
@@ -319,7 +300,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
         ) : (
           <div className="mt-5 max-h-64 space-y-3 overflow-y-auto pr-1 xl:max-h-72">
             {cartItems.map((item) => (
-              <div key={item.name} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
+              <div key={item.id} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
                 <div className="flex min-w-0 items-start justify-between gap-2">
                   <p className="min-w-0 truncate pr-2 text-sm font-semibold text-[color:var(--foreground)]">{item.name}</p>
                   <p className="shrink-0 text-sm font-bold text-[color:var(--foreground)]">
@@ -327,10 +308,10 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                   </p>
                 </div>
                 <div className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
-                  <p className="truncate pr-2 text-xs text-[color:var(--muted-foreground)]">{item.price} po komadu</p>
+                  <p className="truncate pr-2 text-xs text-[color:var(--muted-foreground)]">{formatRsd(item.priceRsd)} po komadu</p>
                   <div className="flex shrink-0 items-center gap-2">
                     <button
-                      onClick={() => updateQuantity(item.name, -1)}
+                      onClick={() => updateQuantity(item.id, -1)}
                       className="chip inline-flex h-8 w-8 items-center justify-center p-0 text-base leading-none"
                       aria-label={`Umanji ${item.name}`}
                     >
@@ -338,7 +319,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                     </button>
                     <span className="w-5 text-center text-sm font-bold">{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.name, 1)}
+                      onClick={() => updateQuantity(item.id, 1)}
                       className="chip inline-flex h-8 w-8 items-center justify-center p-0 text-base leading-none"
                       aria-label={`Uvećaj ${item.name}`}
                     >
@@ -444,7 +425,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
             <div className="flex items-center justify-between">
               <span className="text-[color:var(--muted-foreground)]">Dostava</span>
               <span className="font-semibold text-[color:var(--foreground)]">
-                {cartItems.length ? restaurant.deliveryFee : "0 RSD"}
+                {cartItems.length ? formatRsd(restaurant.deliveryFeeRsd) : "0 RSD"}
               </span>
             </div>
             <div className="h-px bg-[color:var(--border)]" />

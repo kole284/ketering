@@ -1,91 +1,80 @@
 # KeteringGo
 
-Next.js 16 aplikacija za poručivanje keteringa, sada sa PostgreSQL backend-om.
+Next.js 16 aplikacija za pregled restorana i poručivanje keteringa, sa PostgreSQL/Prisma backend-om i stabilnim REST API slojem pripremljenim za buduću Android aplikaciju.
 
 ## Tehnologije
 
-- Next.js 16 (App Router)
+- Next.js 16 App Router
 - React 19
+- TypeScript
 - PostgreSQL
-- `pg` (node postgres klijent)
+- Prisma Client
+- Zod validacija
+- Vitest i Testing Library
 
-## Pokretanje projekta
-
-1. Instaliraj zavisnosti:
+## Pokretanje
 
 ```bash
 npm install
-```
-
-2. Napravi lokalni env fajl:
-
-```bash
 cp .env.example .env.local
-```
-
-3. Podigni PostgreSQL lokalno:
-
-```bash
 docker compose up -d postgres
+npm run db:setup
+npm run dev
 ```
 
-Proveri da `DATABASE_URL` pokazuje na aktivnu bazu:
+Default lokalna baza:
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/keteringgo
 ```
 
-4. Pokreni migracije i seed:
+## Komande
 
-```bash
-npm run db:setup
-```
+- `npm run dev` - lokalni dev server
+- `npm run build` - production build
+- `npm run start` - start production build-a
+- `npm run lint` - ESLint
+- `npm run typecheck` - TypeScript provera
+- `npm run test` - Vitest
+- `npm run db:migrate` - ručna PostgreSQL migracija
+- `npm run db:seed` - seed iz `src/lib/server/sample-data.json`
+- `npm run db:setup` - migracija + seed
 
-5. Startuj aplikaciju:
+## Poslovna pravila
 
-```bash
-npm run dev
-```
+- Server je autoritet za validaciju, proizvode, cene, minimalnu porudžbinu, dostavu i total.
+- Klijent šalje samo `productId` i `quantity`; ne šalje subtotal ili total.
+- Cene su numeričke vrednosti u dinarima (`priceRsd`, `totalRsd`), a formatiranje u `RSD` se radi samo u UI/API display poljima.
+- Porudžbina se ne prikazuje kao uspešna ako nije trajno sačuvana u bazi.
+- Ako baza nije dostupna za kreiranje porudžbine, API vraća `503 DATABASE_UNAVAILABLE`.
+- Email/SMS notifikacije se pokušavaju tek nakon uspešnog čuvanja porudžbine.
+- `Idempotency-Key` sprečava duplo kreiranje porudžbine pri ponovljenom requestu.
 
-## PostgreSQL skripte
+## API
 
-- `npm run db:migrate` - kreira tabele i indekse
-- `npm run db:seed` - popunjava početne gradove i restorane
-- `npm run db:setup` - migracija + seed u jednom koraku
+Stabilni API za web i budući Android je pod `/api/v1`.
 
-Seed podaci se čitaju iz `src/lib/server/sample-data.json`, koji koristi i fallback režim aplikacije. Trenutno se u bazu upisuju Beograd, Novi Sad, Niš i 7 test restorana sa ponudama i proizvodima.
+Glavni endpoint-i:
 
-## Email potvrde
+- `GET /api/v1/cities`
+- `GET /api/v1/restaurants`
+- `GET /api/v1/restaurants/:id`
+- `GET /api/v1/restaurants/:id/products`
+- `GET /api/v1/restaurants/:id/availability`
+- `POST /api/v1/orders`
+- `GET /api/v1/orders/:id?accessToken=...`
 
-Porudžbina se čuva u PostgreSQL tabelama `orders` i `order_items`, a zatim `POST /api/orders` poziva EmailJS servis da kupcu pošalje potvrdu na email koji je uneo u formi.
+Detalji su u `docs/API.md`, a ručna OpenAPI specifikacija je u `docs/openapi.yaml`.
 
-U `.env.local` podesi:
+## Konfiguracija
 
-```bash
-EMAILJS_SERVICE_ID=your_emailjs_service_id
-EMAILJS_TEMPLATE_ID=your_emailjs_template_id
-EMAILJS_PUBLIC_KEY=your_emailjs_public_key
-EMAILJS_PRIVATE_KEY=your_emailjs_private_key
-```
+Pogledaj `.env.example`. Obavezna je baza (`DATABASE_URL`). Email, SMS i CORS su opcioni i konfigurišu se preko env varijabli.
 
-EmailJS template može da koristi ove promenljive:
+Twilio/Resend/EmailJS nisu potrebni za lokalni katalog i checkout testove. Ako nisu podešeni, notifikacije se evidentiraju kao preskočene ili fallback.
 
-- `to_email` - email kupca
-- `to_name` - ime kupca
-- `subject` ili `order_subject` - naslov poruke
-- `message` ili `text_message` - kompletna tekstualna potvrda
-- `html_message` - kompletna HTML potvrda
-- `item_details`, `item_details_html`, `total`, `event_address`, `event_date`, `event_time`
+## Seed podaci
 
-Ako EmailJS nije konfigurisan, porudžbina se i dalje čuva, a API vraća da je email preskočen.
+Seed je ponovljiv i čita jedan zajednički izvor: `src/lib/server/sample-data.json`. Isti izvor se koristi i za read-only fallback prikaz restorana/gradova ako baza nije dostupna za katalog.
 
-## API endpoint-i
+Kreiranje porudžbine ne koristi fallback storage.
 
-- `GET /api/cities` - lista gradova i dostupnosti usluge
-- `GET /api/restaurants?city=Beograd` - lista restorana za grad
-- `GET /api/restaurants/:id` - detalji jednog restorana
-- `POST /api/orders` - kreiranje porudžbine
-
-## Napomena o dostupnosti
-
-Seed podaci su podešeni tako da je usluga trenutno dostupna samo u Beogradu. Za ostale gradove frontend prikazuje poruku o nedostupnosti.

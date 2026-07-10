@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { InitialSiteLoader } from "@/components/loading/initial-site-loader";
 import ThemeToggle from "@/components/theme-toggle";
 import Script from "next/script";
 import "./globals.css";
@@ -50,8 +51,21 @@ export default function RootLayout({
             }
           })();`}
         </Script>
+        <Script id="intro-init" strategy="beforeInteractive">
+          {`(() => {
+            try {
+              if (window.sessionStorage.getItem('catering-intro-seen') === 'true') {
+                document.documentElement.dataset.introSeen = 'true';
+              }
+            } catch (error) {}
+          })();`}
+        </Script>
+        <noscript>
+          <style>{`#initial-site-loader{display:none!important}`}</style>
+        </noscript>
       </head>
       <body className="min-h-full flex flex-col">
+        <InitialSiteLoader />
         {children}
         <ThemeToggle />
       </body>

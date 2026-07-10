@@ -22,7 +22,7 @@ export type OrderEmailContext = {
 };
 
 export type EmailDeliveryResult = {
-  method: "emailjs" | "skipped";
+  method: "resend" | "emailjs" | "skipped";
   message: string;
 };
 
@@ -114,6 +114,17 @@ function getEmailJsConfig() {
   return { serviceId, templateId, publicKey, privateKey };
 }
 
+function getResendConfig() {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+
+  if (!apiKey || !from) {
+    return null;
+  }
+
+  return { apiKey, from };
+}
+
 export function buildOrderEmailPayload(input: OrderEmailContext) {
   const recipientEmail = input.customerEmail.trim();
   const itemCount = input.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -153,12 +164,41 @@ export function buildOrderEmailPayload(input: OrderEmailContext) {
 }
 
 export async function deliverOrderEmail(input: OrderEmailContext): Promise<EmailDeliveryResult> {
+  const resendConfig = getResendConfig();
+
+  if (resendConfig) {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendConfig.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: resendConfig.from,
+        to: input.customerEmail,
+        subject: buildOrderSubject(input),
+        text: buildOrderMessage(input),
+        html: buildOrderMessageHtml(input),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Resend request failed: ${errorText}`);
+    }
+
+    return {
+      method: "resend",
+      message: `Email je poslat na ${input.customerEmail}.`,
+    };
+  }
+
   const config = getEmailJsConfig();
 
   if (!config) {
     return {
       method: "skipped",
-      message: "EmailJS nije konfigurisan u okruženju.",
+      message: "Resend/EmailJS nije konfigurisan u okruženju.",
     };
   }
 

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
-import { listRestaurantsWithSource } from "@/lib/server/restaurant-repository";
+import { listRestaurantsWithSource } from "@/services/restaurant.service";
+import { getCorsHeaders, noStoreHeaders } from "@/lib/server/cors";
 
 export const runtime = "nodejs";
+
+export async function OPTIONS(request: Request) {
+  return new Response(null, { status: 204, headers: getCorsHeaders(request) });
+}
 
 export async function GET(request: Request) {
   try {
@@ -10,20 +15,16 @@ export async function GET(request: Request) {
 
     const result = await listRestaurantsWithSource(city);
     return NextResponse.json(result.data, {
-      headers: {
+      headers: noStoreHeaders({
         "x-data-source": result.source,
-        "Access-Control-Expose-Headers": "x-data-source",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0",
-      },
+        ...getCorsHeaders(request),
+      }),
     });
   } catch (error) {
     console.error("GET /api/restaurants failed", error);
     return NextResponse.json(
       { message: "Neuspešno učitavanje restorana." },
-      { status: 500 },
+      { status: 500, headers: getCorsHeaders(request) },
     );
   }
 }

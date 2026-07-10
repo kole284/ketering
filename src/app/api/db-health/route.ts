@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/server/db";
+import { prisma } from "@/lib/database/prisma";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const result = await query<{ now: string }>("SELECT NOW()::text AS now");
+    const result = await prisma.$queryRaw<Array<{ now: string }>>`SELECT NOW()::text AS now`;
 
     return NextResponse.json(
       {
         status: "ok",
         db: "connected",
-        now: result.rows[0]?.now ?? null,
+        now: result[0]?.now ?? null,
       },
       {
         headers: {

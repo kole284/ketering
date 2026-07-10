@@ -1,144 +1,217 @@
 {
   "cities": [
-    { "name": "Beograd", "isAvailable": true },
-    { "name": "Novi Sad", "isAvailable": true },
-    { "name": "Niš", "isAvailable": false }
+    { "id": 1, "slug": "beograd", "name": "Beograd", "isAvailable": true },
+    { "id": 2, "slug": "novi-sad", "name": "Novi Sad", "isAvailable": false },
+    { "id": 3, "slug": "nis", "name": "Niš", "isAvailable": false },
+    { "id": 4, "slug": "kragujevac", "name": "Kragujevac", "isAvailable": false }
   ],
   "restaurants": [
     {
       "id": 1,
+      "slug": "restoran-primer",
       "name": "Restoran Primer",
       "city": "Beograd",
+      "cityId": 1,
+      "citySlug": "beograd",
       "cuisine": "Srpska",
       "rating": "4.6",
       "eta": "30-40 min",
       "cover": "/placeholders/cover.svg",
       "description": "Domaća hrana, brzo spremno.",
       "address": "Bulevar 1, Beograd",
-      "minOrder": "300 RSD",
-      "deliveryFee": "150 RSD",
+      "minOrderRsd": 300,
+      "deliveryFeeRsd": 150,
+      "isActive": true,
+      "leadTimeMinutes": 60,
+      "timezone": "Europe/Belgrade",
       "offers": ["10% popusta na prvi order"],
+      "workingHours": [
+        { "dayOfWeek": 0, "opensAt": null, "closesAt": null, "isClosed": true },
+        { "dayOfWeek": 1, "opensAt": "09:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 2, "opensAt": "09:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 3, "opensAt": "09:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 4, "opensAt": "09:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 5, "opensAt": "09:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 6, "opensAt": "10:00", "closesAt": "18:00", "isClosed": false }
+      ],
       "products": [
-        { "id": 1, "name": "Ćevapi", "image": "/placeholders/food.svg", "price": "450 RSD" },
-        { "id": 2, "name": "Pljeskavica", "image": "/placeholders/food.svg", "price": "550 RSD" }
-      ]
-    },
-    {
-      "id": 2,
-      "name": "Picerija Test",
-      "city": "Novi Sad",
-      "cuisine": "Italijanska",
-      "rating": "4.4",
-      "eta": "20-30 min",
-      "cover": "/placeholders/cover.svg",
-      "description": "Domaće i autentične pizze.",
-      "address": "Trg 2, Novi Sad",
-      "minOrder": "500 RSD",
-      "deliveryFee": "120 RSD",
-      "offers": [],
-      "products": [
-        { "id": 21, "name": "Margarita pizza", "image": "/placeholders/food.svg", "price": "620 RSD" },
-        { "id": 22, "name": "Kaprićoza pizza", "image": "/placeholders/food.svg", "price": "740 RSD" }
+        { "id": 1, "name": "Ćevapi", "image": "/placeholders/food.svg", "priceRsd": 450 },
+        { "id": 2, "name": "Pljeskavica", "image": "/placeholders/food.svg", "priceRsd": 550 }
       ]
     },
     {
       "id": 3,
+      "slug": "dorcol-domacinska-kuhinja",
       "name": "Dorćol Domaćinska Kuhinja",
       "city": "Beograd",
+      "cityId": 1,
+      "citySlug": "beograd",
       "cuisine": "Domaća",
       "rating": "4.8",
       "eta": "35-45 min",
       "cover": "/placeholders/cover.svg",
       "description": "Topla domaća jela i posluženje za poslovne ručkove, slave i porodična okupljanja.",
       "address": "Cara Dušana 42, Beograd",
-      "minOrder": "1.200 RSD",
-      "deliveryFee": "180 RSD",
+      "minOrderRsd": 1200,
+      "deliveryFeeRsd": 180,
+      "isActive": true,
+      "leadTimeMinutes": 90,
+      "timezone": "Europe/Belgrade",
       "offers": ["Besplatna dostava preko 5.000 RSD", "Set posluženja za 10 osoba"],
+      "workingHours": [
+        { "dayOfWeek": 0, "opensAt": "10:00", "closesAt": "16:00", "isClosed": false },
+        { "dayOfWeek": 1, "opensAt": "08:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 2, "opensAt": "08:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 3, "opensAt": "08:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 4, "opensAt": "08:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 5, "opensAt": "08:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 6, "opensAt": "09:00", "closesAt": "18:00", "isClosed": false }
+      ],
       "products": [
-        { "id": 101, "name": "Mini proja sa kajmakom", "image": "/placeholders/food.svg", "price": "320 RSD" },
-        { "id": 102, "name": "Rolovana piletina", "image": "/placeholders/food.svg", "price": "890 RSD" },
-        { "id": 103, "name": "Salata od pečenih paprika", "image": "/placeholders/food.svg", "price": "420 RSD" },
-        { "id": 104, "name": "Domaća pita sa sirom", "image": "/placeholders/food.svg", "price": "360 RSD" }
+        { "id": 101, "name": "Mini proja sa kajmakom", "image": "/placeholders/food.svg", "priceRsd": 320 },
+        { "id": 102, "name": "Rolovana piletina", "image": "/placeholders/food.svg", "priceRsd": 890 },
+        { "id": 103, "name": "Salata od pečenih paprika", "image": "/placeholders/food.svg", "priceRsd": 420 },
+        { "id": 104, "name": "Domaća pita sa sirom", "image": "/placeholders/food.svg", "priceRsd": 360 }
       ]
     },
     {
       "id": 4,
+      "slug": "vracar-pasta-bar",
       "name": "Vračar Pasta Bar",
       "city": "Beograd",
+      "cityId": 1,
+      "citySlug": "beograd",
       "cuisine": "Italijanska",
       "rating": "4.7",
       "eta": "25-35 min",
       "cover": "/placeholders/cover.svg",
       "description": "Sveže paste, rižota i lagani deserti za kancelarijske pauze i manje događaje.",
       "address": "Mileševska 18, Beograd",
-      "minOrder": "1.000 RSD",
-      "deliveryFee": "160 RSD",
+      "minOrderRsd": 1000,
+      "deliveryFeeRsd": 160,
+      "isActive": true,
+      "leadTimeMinutes": 60,
+      "timezone": "Europe/Belgrade",
       "offers": ["Paket pasta za 6 osoba", "Desert gratis uz porudžbinu preko 4.000 RSD"],
+      "workingHours": [
+        { "dayOfWeek": 0, "opensAt": null, "closesAt": null, "isClosed": true },
+        { "dayOfWeek": 1, "opensAt": "10:00", "closesAt": "22:00", "isClosed": false },
+        { "dayOfWeek": 2, "opensAt": "10:00", "closesAt": "22:00", "isClosed": false },
+        { "dayOfWeek": 3, "opensAt": "10:00", "closesAt": "22:00", "isClosed": false },
+        { "dayOfWeek": 4, "opensAt": "10:00", "closesAt": "22:00", "isClosed": false },
+        { "dayOfWeek": 5, "opensAt": "10:00", "closesAt": "23:30", "isClosed": false },
+        { "dayOfWeek": 6, "opensAt": "10:00", "closesAt": "23:30", "isClosed": false }
+      ],
       "products": [
-        { "id": 201, "name": "Bruskete sa paradajzom", "image": "/placeholders/food.svg", "price": "390 RSD" },
-        { "id": 202, "name": "Pasta Alfredo", "image": "/placeholders/food.svg", "price": "820 RSD" },
-        { "id": 203, "name": "Rižoto sa pečurkama", "image": "/placeholders/food.svg", "price": "780 RSD" },
-        { "id": 204, "name": "Tiramisu čašica", "image": "/placeholders/food.svg", "price": "450 RSD" }
+        { "id": 201, "name": "Bruskete sa paradajzom", "image": "/placeholders/food.svg", "priceRsd": 390 },
+        { "id": 202, "name": "Pasta Alfredo", "image": "/placeholders/food.svg", "priceRsd": 820 },
+        { "id": 203, "name": "Rižoto sa pečurkama", "image": "/placeholders/food.svg", "priceRsd": 780 },
+        { "id": 204, "name": "Tiramisu čašica", "image": "/placeholders/food.svg", "priceRsd": 450 }
       ]
     },
     {
       "id": 5,
+      "slug": "zemun-riblji-kutak",
       "name": "Zemun Riblji Kutak",
       "city": "Beograd",
+      "cityId": 1,
+      "citySlug": "beograd",
       "cuisine": "Riblja",
       "rating": "4.5",
       "eta": "40-55 min",
       "cover": "/placeholders/cover.svg",
       "description": "Riblji specijaliteti, čorbe i prilozi za ručkove uz Dunav ili ketering na adresi.",
       "address": "Kej Oslobođenja 9, Beograd",
-      "minOrder": "1.500 RSD",
-      "deliveryFee": "220 RSD",
+      "minOrderRsd": 1500,
+      "deliveryFeeRsd": 220,
+      "isActive": true,
+      "leadTimeMinutes": 120,
+      "timezone": "Europe/Belgrade",
       "offers": ["Porodični riblji paket", "10% popusta za unapred zakazane porudžbine"],
+      "workingHours": [
+        { "dayOfWeek": 0, "opensAt": "11:00", "closesAt": "18:00", "isClosed": false },
+        { "dayOfWeek": 1, "opensAt": null, "closesAt": null, "isClosed": true },
+        { "dayOfWeek": 2, "opensAt": "11:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 3, "opensAt": "11:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 4, "opensAt": "11:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 5, "opensAt": "11:00", "closesAt": "22:00", "isClosed": false },
+        { "dayOfWeek": 6, "opensAt": "11:00", "closesAt": "22:00", "isClosed": false }
+      ],
       "products": [
-        { "id": 301, "name": "Dimljena pastrmka", "image": "/placeholders/food.svg", "price": "1.250 RSD" },
-        { "id": 302, "name": "Riblja čorba", "image": "/placeholders/food.svg", "price": "520 RSD" },
-        { "id": 303, "name": "Lignje na žaru", "image": "/placeholders/food.svg", "price": "1.180 RSD" },
-        { "id": 304, "name": "Krompir salata", "image": "/placeholders/food.svg", "price": "340 RSD" }
+        { "id": 301, "name": "Dimljena pastrmka", "image": "/placeholders/food.svg", "priceRsd": 1250 },
+        { "id": 302, "name": "Riblja čorba", "image": "/placeholders/food.svg", "priceRsd": 520 },
+        { "id": 303, "name": "Lignje na žaru", "image": "/placeholders/food.svg", "priceRsd": 1180 },
+        { "id": 304, "name": "Krompir salata", "image": "/placeholders/food.svg", "priceRsd": 340 }
       ]
     },
     {
       "id": 6,
+      "slug": "novi-beograd-event-bites",
       "name": "Novi Beograd Event Bites",
       "city": "Beograd",
+      "cityId": 1,
+      "citySlug": "beograd",
       "cuisine": "Internacionalna",
       "rating": "4.6",
       "eta": "30-45 min",
       "cover": "/placeholders/cover.svg",
       "description": "Finger food, salate i slatki zalogaji za timske sastanke, radionice i koktele.",
       "address": "Bulevar Milutina Milankovića 11g, Beograd",
-      "minOrder": "900 RSD",
-      "deliveryFee": "140 RSD",
+      "minOrderRsd": 900,
+      "deliveryFeeRsd": 140,
+      "isActive": true,
+      "leadTimeMinutes": 60,
+      "timezone": "Europe/Belgrade",
       "offers": ["Korporativni set za 12 osoba", "Gratis piće za porudžbine preko 6.000 RSD"],
+      "workingHours": [
+        { "dayOfWeek": 0, "opensAt": null, "closesAt": null, "isClosed": true },
+        { "dayOfWeek": 1, "opensAt": "08:00", "closesAt": "19:00", "isClosed": false },
+        { "dayOfWeek": 2, "opensAt": "08:00", "closesAt": "19:00", "isClosed": false },
+        { "dayOfWeek": 3, "opensAt": "08:00", "closesAt": "19:00", "isClosed": false },
+        { "dayOfWeek": 4, "opensAt": "08:00", "closesAt": "19:00", "isClosed": false },
+        { "dayOfWeek": 5, "opensAt": "08:00", "closesAt": "20:00", "isClosed": false },
+        { "dayOfWeek": 6, "opensAt": "09:00", "closesAt": "16:00", "isClosed": false }
+      ],
       "products": [
-        { "id": 401, "name": "Mini burgeri", "image": "/placeholders/food.svg", "price": "690 RSD" },
-        { "id": 402, "name": "Tortilja zalogaji", "image": "/placeholders/food.svg", "price": "540 RSD" },
-        { "id": 403, "name": "Cezar salata box", "image": "/placeholders/food.svg", "price": "650 RSD" },
-        { "id": 404, "name": "Brownie kocke", "image": "/placeholders/food.svg", "price": "420 RSD" }
+        { "id": 401, "name": "Mini burgeri", "image": "/placeholders/food.svg", "priceRsd": 690 },
+        { "id": 402, "name": "Tortilja zalogaji", "image": "/placeholders/food.svg", "priceRsd": 540 },
+        { "id": 403, "name": "Cezar salata box", "image": "/placeholders/food.svg", "priceRsd": 650 },
+        { "id": 404, "name": "Brownie kocke", "image": "/placeholders/food.svg", "priceRsd": 420 }
       ]
     },
     {
       "id": 7,
+      "slug": "savski-venac-mezze",
       "name": "Savski Venac Mezze",
       "city": "Beograd",
+      "cityId": 1,
+      "citySlug": "beograd",
       "cuisine": "Mediteranska",
       "rating": "4.9",
       "eta": "30-40 min",
       "cover": "/placeholders/cover.svg",
       "description": "Mediteranski mezze, ražnjići i deserti za lagane večere i proslave.",
       "address": "Sarajevska 27, Beograd",
-      "minOrder": "1.100 RSD",
-      "deliveryFee": "170 RSD",
+      "minOrderRsd": 1100,
+      "deliveryFeeRsd": 170,
+      "isActive": true,
+      "leadTimeMinutes": 60,
+      "timezone": "Europe/Belgrade",
       "offers": ["Mezze paket za 8 osoba", "Besplatna baklava preko 3.500 RSD"],
+      "workingHours": [
+        { "dayOfWeek": 0, "opensAt": "12:00", "closesAt": "18:00", "isClosed": false },
+        { "dayOfWeek": 1, "opensAt": "10:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 2, "opensAt": "10:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 3, "opensAt": "10:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 4, "opensAt": "10:00", "closesAt": "21:00", "isClosed": false },
+        { "dayOfWeek": 5, "opensAt": "10:00", "closesAt": "23:00", "isClosed": false },
+        { "dayOfWeek": 6, "opensAt": "10:00", "closesAt": "23:00", "isClosed": false }
+      ],
       "products": [
-        { "id": 501, "name": "Humus trio", "image": "/placeholders/food.svg", "price": "480 RSD" },
-        { "id": 502, "name": "Falafel tanjir", "image": "/placeholders/food.svg", "price": "720 RSD" },
-        { "id": 503, "name": "Pileći ražnjići", "image": "/placeholders/food.svg", "price": "860 RSD" },
-        { "id": 504, "name": "Baklava zalogaji", "image": "/placeholders/food.svg", "price": "390 RSD" }
+        { "id": 501, "name": "Humus trio", "image": "/placeholders/food.svg", "priceRsd": 480 },
+        { "id": 502, "name": "Falafel tanjir", "image": "/placeholders/food.svg", "priceRsd": 720 },
+        { "id": 503, "name": "Pileći ražnjići", "image": "/placeholders/food.svg", "priceRsd": 860 },
+        { "id": 504, "name": "Baklava zalogaji", "image": "/placeholders/food.svg", "priceRsd": 390 }
       ]
     }
   ]

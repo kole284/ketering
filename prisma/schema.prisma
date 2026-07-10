@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model City {
+  id               Int          @id @default(autoincrement())
+  name             String       @unique
+  slug             String       @unique
+  serviceAvailable Boolean      @default(false) @map("service_available")
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  restaurants      Restaurant[]
+
+  @@map("cities")
+}
+
+model Restaurant {
+  id             Int         @id @default(autoincrement())
+  cityId         Int         @map("city_id")
+  slug           String      @unique
+  name           String
+  cuisine        String
+  rating         Decimal     @db.Decimal(2, 1)
+  eta            String
+  cover          String
+  description    String
+  address        String
+  minOrderRsd    Int         @map("min_order_rsd")
+  deliveryFeeRsd Int         @map("delivery_fee_rsd")
+  isActive       Boolean     @default(true) @map("is_active")
+  leadTimeMinutes Int        @default(60) @map("lead_time_minutes")
+  timezone       String      @default("Europe/Belgrade")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
+  city           City        @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  offers         Offer[]
+  products       Product[]
+  orders         Order[]
+  workingHours   RestaurantWorkingHour[]
+
+  @@index([cityId], map: "idx_restaurants_city_id")
+  @@map("restaurants")
+}
+
+model RestaurantWorkingHour {
+  id           Int        @id @default(autoincrement())
+  restaurantId Int        @map("restaurant_id")
+  dayOfWeek    Int        @map("day_of_week")
+  opensAt      String?    @map("opens_at") @db.VarChar(5)
+  closesAt     String?    @map("closes_at") @db.VarChar(5)
+  isClosed     Boolean    @default(false) @map("is_closed")
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, dayOfWeek], map: "restaurant_working_hours_restaurant_day_key")
+  @@index([restaurantId], map: "idx_restaurant_working_hours_restaurant_id")
+  @@map("restaurant_working_hours")
+}
+
+model Offer {
+  id           Int        @id @default(autoincrement())
+  restaurantId Int        @map("restaurant_id")
+  text         String
+  sortOrder    Int        @default(0) @map("sort_order")
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId], map: "idx_offers_restaurant_id")
+  @@map("offers")
+}
+
+model Product {
+  id           Int         @id @default(autoincrement())
+  restaurantId Int         @map("restaurant_id")
+  name         String
+  image        String
+  priceRsd     Int         @map("price_rsd")
+  sortOrder    Int         @default(0) @map("sort_order")
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderItems   OrderItem[]
+
+  @@index([restaurantId], map: "idx_products_restaurant_id")
+  @@map("products")
+}
+
+model Order {
+  id             BigInt                 @id @default(autoincrement())
+  restaurantId   Int                    @map("restaurant_id")
+  idempotencyKey String?                @unique @map("idempotency_key")
+  idempotencyRequestHash String?        @map("idempotency_request_hash")
+  customerName   String                 @map("customer_name")
+  customerEmail  String                 @map("customer_email")
+  customerPhone  String                 @map("customer_phone")
+  eventAddress   String                 @map("event_address")
+  eventDate      DateTime               @map("event_date") @db.Date
+  eventTime      DateTime               @map("event_time") @db.Time(6)
+  note           String?
+  subtotalRsd    Int                    @map("subtotal_rsd")
+  deliveryFeeRsd Int                    @map("delivery_fee_rsd")
+  totalRsd       Int                    @map("total_rsd")
+  status         String                 @default("pending")
+  emailStatus    String                 @default("not_requested") @map("email_status")
+  smsStatus      String                 @default("not_requested") @map("sms_status")
+  accessTokenHash String                @unique @map("access_token_hash")
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @default(now()) @map("updated_at") @db.Timestamptz(6)
+  restaurant     Restaurant             @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
+  items          OrderItem[]
+  emailFailures  OrderEmailFailure[]
+  notificationLogs OrderNotificationLog[]
+
+  @@index([restaurantId], map: "idx_orders_restaurant_id")
+  @@map("orders")
+}
+
+model OrderItem {
+  id           BigInt  @id @default(autoincrement())
+  orderId      BigInt  @map("order_id")
+  productId    Int     @map("product_id")
+  quantity     Int
+  unitPriceRsd Int     @map("unit_price_rsd")
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+model OrderEmailFailure {
+  id           BigInt   @id @default(autoincrement())
+  orderId      BigInt   @map("order_id")
+  recipient    String
+  errorMessage String   @map("error_message")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], map: "idx_order_email_failures_order_id")
+  @@map("order_email_failures")
+}
+
+model OrderNotificationLog {
+  id           BigInt   @id @default(autoincrement())
+  orderId      BigInt   @map("order_id")
+  channel      String
+  provider     String?
+  status       String
+  message      String?
+  errorMessage String?  @map("error_message")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], map: "idx_order_notification_logs_order_id")
+  @@map("order_notification_logs")
+}

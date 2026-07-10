@@ -1,247 +1,76 @@
-import { NextResponse } from "next/server";
-import { fallbackRestaurants } from "@/lib/server/fallback-data";
-import { createOrder, getRestaurantById } from "@/lib/server/restaurant-repository";
-import { deliverOrderEmail } from "@/lib/server/email";
-import {
-  buildOrderSmsMessage,
-  deliverOrderSms,
-  normalizeSerbianPhoneNumber,
-} from "@/lib/server/sms";
-import { type ValidatedOrderPayload, validateOrderPayload } from "@/lib/server/order-validation";
-import type { Restaurant } from "@/lib/types/restaurant";
+import { getValidationMessage, orderPayloadSchema } from "@/lib/validation/order";
+import { submitOrder } from "@/services/order.service";
+import { errorResponse, successResponse } from "@/lib/server/api-response";
+import { BadRequestError, RateLimitedError, RequestTooLargeError, ValidationError } from "@/lib/server/errors";
+import { getOptionalServerEnv } from "@/lib/server/env";
+import { checkRateLimit, getRateLimitKey } from "@/lib/server/rate-limit";
+import { getCorsHeaders } from "@/lib/server/cors";
+import { readJsonWithLimit } from "@/lib/server/request";
 
 export const runtime = "nodejs";
 
-type OrderResult = {
-  id: number;
-  status: string;
-  total: string;
-  source: "db" | "fallback";
-};
-
-function formatRsd(value: number): string {
-  return `${new Intl.NumberFormat("sr-RS").format(value)} RSD`;
+export async function OPTIONS(request: Request) {
+  return new Response(null, { status: 204, headers: getCorsHeaders(request) });
 }
 
-function parseRsdPrice(value: string): number {
-  return Number(value.replace(/\./g, "").replace(" RSD", ""));
-}
+function parseIdempotencyKey(request: Request): string | undefined {
+  const value = request.headers.get("idempotency-key")?.trim();
 
-function generateOfflineOrderId(): number {
-  const randomSuffix = Math.floor(Math.random() * 900) + 100;
-  return Number(`${Date.now()}${randomSuffix}`);
-}
-
-function isDatabaseUnavailableError(error: unknown): boolean {
-  if (!(error instanceof Error)) {
-    return false;
+  if (!value) {
+    return undefined;
   }
 
-  const message = error.message.toLowerCase();
-
-  return (
-    message.includes("econnrefused") ||
-    message.includes("connection refused") ||
-    message.includes("could not connect") ||
-    message.includes("server closed the connection unexpectedly") ||
-    message.includes("terminating connection") ||
-    message.includes("relation ") ||
-    message.includes("database")
-  );
-}
-
-function buildFallbackOrder(bodyData: ValidatedOrderPayload, restaurantId: number) {
-  const restaurant = fallbackRestaurants.find((entry) => entry.id === restaurantId);
-
-  if (!restaurant) {
-    throw new Error("Restoran nije pronadjen.");
+  if (value.length < 8 || value.length > 200 || !/^[A-Za-z0-9._:-]+$/.test(value)) {
+    throw new ValidationError("Idempotency-Key mora imati 8-200 karaktera i sme sadržati slova, brojeve, tačku, donju crtu, dvotačku ili crticu.");
   }
 
-  const priceByProductId = new Map<number, number>(
-    restaurant.products.map((product) => [product.id, parseRsdPrice(product.price)]),
-  );
-
-  for (const item of bodyData.items) {
-    if (!priceByProductId.has(item.productId)) {
-      throw new Error("Neki proizvodi nisu važeći za izabrani restoran.");
-    }
-  }
-
-  const subtotal = bodyData.items.reduce((sum, item) => {
-    const unitPrice = priceByProductId.get(item.productId) ?? 0;
-    return sum + unitPrice * item.quantity;
-  }, 0);
-
-  const deliveryFee = parseRsdPrice(restaurant.deliveryFee);
-  const total = subtotal + deliveryFee;
-
-  return {
-    id: generateOfflineOrderId(),
-    status: "pending",
-    total: formatRsd(total),
-    source: "fallback" as const,
-  };
+  return value;
 }
-
-function buildEmailItems(restaurant: Restaurant, items: ValidatedOrderPayload["items"]) {
-  return items.map((item) => {
-    const product = restaurant.products.find((entry) => entry.id === item.productId);
-    const unitPrice = product?.price ?? "0 RSD";
-    const unitPriceValue = parseRsdPrice(unitPrice);
-
-    return {
-      name: product?.name ?? `Proizvod #${item.productId}`,
-      quantity: item.quantity,
-      unitPrice,
-      lineTotal: formatRsd(unitPriceValue * item.quantity),
-    };
-  });
-}
-
-function getOrderNotificationPhone(): string {
-  const configuredPhone = process.env.ORDER_NOTIFICATION_PHONE ?? "0605581104";
-  const phone = normalizeSerbianPhoneNumber(configuredPhone);
-
-  if (!phone) {
-    throw new Error("Nevažeći broj za obaveštenje o porudžbini.");
-  }
-
-  return phone;
-}
-
-const ORDER_NOTIFICATION_PHONE = getOrderNotificationPhone();
 
 export async function POST(request: Request) {
+  const env = getOptionalServerEnv();
+  const maxBytes = env.ORDER_REQUEST_MAX_BYTES ?? 16_384;
+
+  const rateLimit = checkRateLimit({
+    key: `orders:${getRateLimitKey(request)}`,
+    limit: env.ORDER_RATE_LIMIT_MAX ?? 20,
+    windowMs: env.ORDER_RATE_LIMIT_WINDOW_MS ?? 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return errorResponse(new RateLimitedError(), {
+      headers: {
+        ...getCorsHeaders(request),
+        "Retry-After": String(rateLimit.retryAfterSeconds),
+      },
+    });
+  }
+
   let body: unknown;
+  let idempotencyKey: string | undefined;
 
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ message: "Nevažeći JSON payload." }, { status: 400 });
-  }
-
-  const validation = validateOrderPayload(body);
-
-  if (!validation.ok) {
-    return NextResponse.json(
-      { message: validation.message },
-      { status: 400 },
-    );
-  }
-
-  const bodyData = validation.data;
-  const restaurant = await getRestaurantById(bodyData.restaurantId);
-
-  if (!restaurant) {
-    return NextResponse.json({ message: "Restoran nije pronadjen." }, { status: 404 });
-  }
-
-  let order: OrderResult;
-
-  try {
-    const persistedOrder = await createOrder({
-      restaurantId: bodyData.restaurantId,
-      customerName: bodyData.customerName,
-      customerEmail: bodyData.customerEmail,
-      customerPhone: bodyData.customerPhone,
-      eventAddress: bodyData.eventAddress,
-      eventDate: bodyData.eventDate,
-      eventTime: bodyData.eventTime,
-      note: bodyData.note,
-      items: bodyData.items,
-    });
-
-    order = {
-      ...persistedOrder,
-      source: "db",
-    };
+    idempotencyKey = parseIdempotencyKey(request);
+    body = await readJsonWithLimit(request, maxBytes);
   } catch (error) {
-    if (!isDatabaseUnavailableError(error)) {
-      console.error("POST /api/orders failed", error);
-      return NextResponse.json(
-        { message: "Porudzbina nije sacuvana. Pokusaj ponovo." },
-        { status: 500 },
-      );
+    if (error instanceof RequestTooLargeError || error instanceof BadRequestError || error instanceof ValidationError) {
+      return errorResponse(error, { headers: getCorsHeaders(request) });
     }
 
-    try {
-      order = buildFallbackOrder(bodyData, bodyData.restaurantId);
-      console.warn("POST /api/orders using fallback order storage", error);
-    } catch (fallbackError) {
-      const status = fallbackError instanceof Error && fallbackError.message.includes("nije pronadjen") ? 404 : 400;
-      return NextResponse.json(
-        {
-          message:
-            fallbackError instanceof Error ? fallbackError.message : "Porudzbina nije sacuvana.",
-        },
-        { status },
-      );
-    }
+    return errorResponse(new BadRequestError("Nevažeći JSON payload."), { headers: getCorsHeaders(request) });
   }
 
-  let smsResult: Awaited<ReturnType<typeof deliverOrderSms>> | null = null;
-  let emailResult: Awaited<ReturnType<typeof deliverOrderEmail>> | null = null;
+  const validation = orderPayloadSchema.safeParse(body);
 
-  if (bodyData.sendSms) {
-    const smsMessage = buildOrderSmsMessage({
-      orderId: order.id,
-      restaurantName: restaurant.name,
-      customerName: bodyData.customerName,
-      total: order.total,
-      eventAddress: bodyData.eventAddress,
-      eventDate: bodyData.eventDate,
-      eventTime: bodyData.eventTime,
-      items: bodyData.items.map((item) => {
-        const product = restaurant.products.find((entry) => entry.id === item.productId);
-        return {
-          name: product?.name ?? `Proizvod #${item.productId}`,
-          quantity: item.quantity,
-        };
-      }),
-      note: bodyData.note,
-    });
-
-    smsResult = await deliverOrderSms(ORDER_NOTIFICATION_PHONE, smsMessage);
+  if (!validation.success) {
+    return errorResponse(new ValidationError(getValidationMessage(validation.error)), { headers: getCorsHeaders(request) });
   }
 
-  if (bodyData.sendEmail) {
-    try {
-      emailResult = await deliverOrderEmail({
-        orderId: order.id,
-        restaurantName: restaurant.name,
-        customerName: bodyData.customerName,
-        customerEmail: bodyData.customerEmail,
-        customerPhone: bodyData.customerPhone,
-        total: order.total,
-        eventAddress: bodyData.eventAddress,
-        eventDate: bodyData.eventDate,
-        eventTime: bodyData.eventTime,
-        items: buildEmailItems(restaurant, bodyData.items),
-        note: bodyData.note,
-      });
-    } catch (error) {
-      console.warn("EmailJS delivery failed", error);
-      emailResult = {
-        method: "skipped",
-        message: error instanceof Error ? error.message : "Email nije poslat.",
-      };
-    }
+  try {
+    const result = await submitOrder(validation.data, { idempotencyKey });
+    return successResponse(result, { status: result.idempotentReplay ? 200 : 201, headers: getCorsHeaders(request) });
+  } catch (error) {
+    console.error("POST /api/orders failed", error);
+    return errorResponse(error, { headers: getCorsHeaders(request) });
   }
-
-  return NextResponse.json(
-    {
-      id: order.id,
-      status: order.status,
-      total: order.total,
-      orderSource: order.source,
-      smsDelivery: smsResult?.method ?? "none",
-      smsLink: smsResult?.smsLink,
-      smsRecipient: ORDER_NOTIFICATION_PHONE,
-      emailDelivery: emailResult?.method ?? "none",
-      emailMessage: emailResult?.message,
-      customerPhone: bodyData.customerPhone,
-      customerEmail: bodyData.customerEmail,
-    },
-    { status: 201 },
-  );
 }

@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Clock, MapPin, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/ui/button";
+import { formatRsd } from "@/lib/utils/money";
 import type { Restaurant } from "@/lib/types/restaurant";
 
 type RestaurantCardProps = {
@@ -41,7 +42,7 @@ export function RestaurantCard({ restaurant, priority = false }: RestaurantCardP
           </Badge>
           <Badge>
             <Truck aria-hidden="true" size={14} />
-            {restaurant.deliveryFee}
+            {formatRsd(restaurant.deliveryFeeRsd)}
           </Badge>
           <Badge>
             <MapPin aria-hidden="true" size={14} />

@@ -7,6 +7,7 @@ import RestaurantCartDemo from "@/components/restaurant-cart-demo";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/ui/button";
 import { getRestaurantById } from "@/services/restaurant.service";
+import { formatRsd } from "@/lib/utils/money";
 
 export const dynamic = "force-dynamic";
 
@@ -71,13 +72,13 @@ export default async function RestaurantDetailsPage({ params }: RestaurantDetail
               <p className="flex items-center gap-2 text-xs font-semibold uppercase text-[color:var(--muted-foreground)]">
                 <ShoppingCart aria-hidden="true" size={15} /> Minimalna porudžbina
               </p>
-              <p className="mt-1 text-lg font-bold text-[color:var(--foreground)]">{restaurant.minOrder}</p>
+              <p className="mt-1 text-lg font-bold text-[color:var(--foreground)]">{formatRsd(restaurant.minOrderRsd)}</p>
             </div>
             <div className="info-line">
               <p className="flex items-center gap-2 text-xs font-semibold uppercase text-[color:var(--muted-foreground)]">
                 <Truck aria-hidden="true" size={15} /> Dostava
               </p>
-              <p className="mt-1 text-lg font-bold text-[color:var(--foreground)]">{restaurant.deliveryFee}</p>
+              <p className="mt-1 text-lg font-bold text-[color:var(--foreground)]">{formatRsd(restaurant.deliveryFeeRsd)}</p>
             </div>
           </div>
         </section>
