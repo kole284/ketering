@@ -1,16 +1,28 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import { connection } from "next/server";
+import { BookingForm } from "@/components/booking-form";
+import { belgradeTodayIso, parseBooking } from "@/lib/booking";
 
-export default function Home() {
+async function Booking({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
+  const booking = parseBooking(await searchParams);
+  await connection(); // "today" must be computed per request
+
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-      <Image
-        src="/ketering-logo.png"
-        alt="Ketering"
-        width={160}
-        height={160}
-        priority
-      />
-      <h1 className="text-3xl font-semibold tracking-tight">Ketering</h1>
-    </main>
+    <BookingForm
+      todayIso={belgradeTodayIso()}
+      defaultDate={booking.date}
+      defaultHour={booking.hour}
+      defaultServices={booking.services}
+    />
+  );
+}
+
+export default function Home({ searchParams }: PageProps<"/">) {
+  return (
+    <div className="mx-auto flex w-full max-w-[1440px] flex-1">
+      <Suspense>
+        <Booking searchParams={searchParams} />
+      </Suspense>
+    </div>
   );
 }
