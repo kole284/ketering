@@ -51,7 +51,7 @@ function CartLink({ locale, t, withLabel }: { locale: Locale; t: Dictionary; wit
 function CategoryNav({ locale, t, className = "" }: { locale: Locale; t: Dictionary; className?: string }) {
   return (
     <nav aria-label={t.header.categories} className={className}>
-      <ul className="flex items-center gap-7">
+      <ul className="flex items-center gap-6 2xl:gap-7">
         {categoryLinks(t).map((link) => (
           <li key={link.path}>
             <Link
@@ -91,12 +91,13 @@ export async function SiteHeader() {
 
       {/* Desktop: one row */}
       <div className="mx-auto hidden h-20 max-w-[1440px] items-center justify-between gap-6 px-12 xl:flex">
-        <div className="flex items-center gap-12">
+        <div className="flex shrink-0 items-center gap-10 2xl:gap-12">
           <Logo locale={locale} />
           <CategoryNav locale={locale} t={t} />
         </div>
-        <div className="flex items-center gap-4">
-          <div className="w-[360px]">
+        {/* The search field gives up width first, so longer labels (e.g. Russian) never overflow. */}
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-4">
+          <div className="w-full max-w-[360px] min-w-0">
             <SearchField locale={locale} t={t} id="search-desktop" />
           </div>
           <LanguageDropdown />
