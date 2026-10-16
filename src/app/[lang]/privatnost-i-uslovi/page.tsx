@@ -23,7 +23,7 @@ export default async function LegalPage() {
           <a
             key={doc.id}
             href={`#${doc.id}`}
-            className="flex h-10 items-center rounded-full border border-line px-5 text-[15px] font-medium hover:border-ink"
+            className="flex h-10 items-center caps border border-line px-5 hover:border-ink"
           >
             {doc.title}
           </a>

@@ -1,50 +1,156 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { fill } from "@/i18n/config";
 import { useI18n } from "@/i18n/provider";
 import { parseBooking, serviceLabel, SERVICES } from "@/lib/booking";
-import { addToCart, cartDetails, setBooking, useCart } from "@/lib/cart";
-import { formatQuantity, priceLabel, type MenuItem } from "@/lib/menu";
+import { addToCart, cartDetails, setBooking, setQuantity, useCart } from "@/lib/cart";
+import { formatPrice, formatQuantity, priceLabel, type MenuItem } from "@/lib/menu";
 import { RESTAURANTS } from "@/lib/restaurants";
-import { QuantityStepper } from "./quantity-stepper";
+import { MinusIcon, PlusIcon, TrashIcon } from "./icons";
 
-function MenuRow({ item, inCart, onAdd }: { item: MenuItem; inCart?: number; onAdd: () => void }) {
+type Group = { key: string; title: string; items: MenuItem[] };
+
+const sectionId = (key: string) => `grupa-${key}`;
+
+/** Glovo-style round "+" that adds the smallest quantity in one tap. */
+function AddButton({ item, onAdd, className = "" }: { item: MenuItem; onAdd: () => void; className?: string }) {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        addToCart(item, item.min);
+        onAdd();
+      }}
+      className={`flex size-11 items-center justify-center rounded-full bg-surface transition-colors hover:bg-accent hover:text-on-accent ${className}`}
+    >
+      <PlusIcon size={20} />
+      <span className="sr-only">{fill(t.menu.addItem, { name: item.name })}</span>
+    </button>
+  );
+}
+
+/** Shown under an item once it is in the cart: trash/minus, quantity, plus. */
+function InCartBox({ item, quantity }: { item: MenuItem; quantity: number }) {
   const { locale, t } = useI18n();
-  const [quantity, setQuantity] = useState(item.min);
-  const [added, setAdded] = useState(false);
-
-  const add = () => {
-    addToCart(item, quantity);
-    onAdd();
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  };
+  const atMin = quantity <= item.min;
+  const change = (delta: number) => setQuantity(item.id, Math.round((quantity + delta) * 10) / 10);
 
   return (
-    <li className="grid grid-cols-[88px_1fr] gap-x-4 gap-y-4 border-b border-ink py-6 md:grid-cols-[120px_1fr_auto] md:items-center md:gap-x-8">
-      {/* Photo placeholder until restaurants upload real images. */}
-      <div className="aspect-square rounded-xl bg-surface" role="img" aria-label={fill(t.restaurants.photo, { name: item.name })} />
-      <div className="flex flex-col gap-1">
-        <h3 className="text-lg font-medium md:text-xl">{item.name}</h3>
-        <p className="text-[15px] text-muted">{item.description}</p>
-        <p className="mt-1 text-[15px] font-medium">{priceLabel(item, locale, t)}</p>
-        {inCart !== undefined && (
-          <p className="text-sm text-muted">{fill(t.menu.inCart, { q: formatQuantity(item, inCart, locale, t) })}</p>
-        )}
+    <div className="col-span-full flex items-center justify-between gap-4 border border-line px-4 py-4 md:px-5">
+      <div className="min-w-0">
+        <p className="truncate text-[15px]">{item.name}</p>
+        <p className="text-[15px] font-medium tabular-nums">{formatPrice(item.price * quantity, locale, t)}</p>
       </div>
-      <div className="col-span-2 flex items-center gap-3 md:col-span-1">
-        <QuantityStepper item={item} value={quantity} onChange={setQuantity} />
+      <div className="flex h-11 shrink-0 items-center rounded-full bg-surface">
         <button
           type="button"
-          onClick={add}
-          className="h-12 flex-1 rounded-full bg-accent px-6 text-[15px] font-semibold whitespace-nowrap text-on-accent transition-colors hover:bg-accent-strong md:flex-none"
+          onClick={() => (atMin ? setQuantity(item.id, 0) : change(-item.step))}
+          className="flex size-11 items-center justify-center"
         >
-          {added ? t.menu.added : t.menu.addToCart}
+          {atMin ? <TrashIcon size={18} /> : <MinusIcon size={18} />}
+          <span className="sr-only">{atMin ? t.menu.remove : t.menu.decrease}</span>
+        </button>
+        <span className="min-w-14 text-center text-sm font-medium tabular-nums" aria-live="polite">
+          {formatQuantity(item, quantity, locale, t)}
+        </span>
+        <button type="button" onClick={() => change(item.step)} className="flex size-11 items-center justify-center">
+          <PlusIcon size={18} />
+          <span className="sr-only">{t.menu.increase}</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+function MenuRow({ item, quantity, onAdd }: { item: MenuItem; quantity?: number; onAdd: () => void }) {
+  const { locale, t } = useI18n();
+
+  return (
+    <li className="grid grid-cols-[88px_1fr] gap-x-4 gap-y-4 border-b border-line py-6 md:grid-cols-[120px_1fr_auto] md:gap-x-8">
+      {/* Photo placeholder until restaurants upload real images. */}
+      <div className="aspect-square bg-surface" role="img" aria-label={fill(t.restaurants.photo, { name: item.name })} />
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="text-lg leading-snug md:text-xl">{item.name}</h3>
+          <p className="shrink-0 pt-0.5 text-[15px] tabular-nums md:hidden">{formatPrice(item.price, locale, t)}</p>
+        </div>
+        <p className="text-[15px] text-muted">{item.description}</p>
+        <p className="text-sm text-muted">{priceLabel(item, locale, t)}</p>
+      </div>
+      <div className="col-span-full flex justify-end md:col-span-1 md:flex-col md:items-end md:justify-between">
+        <p className="hidden text-[15px] tabular-nums md:block">{formatPrice(item.price, locale, t)}</p>
+        <AddButton item={item} onAdd={onAdd} />
+      </div>
+      {quantity !== undefined && <InCartBox item={item} quantity={quantity} />}
     </li>
+  );
+}
+
+function Bestsellers({ items, onAdd }: { items: MenuItem[]; onAdd: () => void }) {
+  const { locale, t } = useI18n();
+  return (
+    <ul className="-mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:scroll-px-0 md:px-0">
+      {items.map((item) => (
+        <li key={item.id} className="w-40 shrink-0 snap-start md:w-52">
+          <div className="relative aspect-square bg-surface" role="img" aria-label={fill(t.restaurants.photo, { name: item.name })}>
+            <AddButton item={item} onAdd={onAdd} className="absolute right-2 bottom-2 bg-bg" />
+          </div>
+          <p className="mt-3 line-clamp-2 text-[15px] leading-snug">{item.name}</p>
+          <p className="mt-1 text-[15px] font-medium tabular-nums">{formatPrice(item.price, locale, t)}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Sticky category tabs that follow scrolling, like Glovo. */
+function CategoryTabs({ groups }: { groups: Group[] }) {
+  const [active, setActive] = useState(groups[0]?.key);
+  const tabs = useRef<HTMLUListElement>(null);
+  const keys = groups.map((group) => group.key).join(",");
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActive(visible[0].target.id.replace("grupa-", ""));
+      },
+      // A section counts as current while it crosses the band just under the sticky bars.
+      { rootMargin: "-160px 0px -55% 0px" },
+    );
+    for (const key of keys.split(",")) {
+      const el = document.getElementById(sectionId(key));
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [keys]);
+
+  useEffect(() => {
+    const tab = tabs.current?.querySelector<HTMLElement>(`[data-key="${active}"]`);
+    if (tab && tabs.current) tabs.current.scrollTo({ left: tab.offsetLeft - 16, behavior: "smooth" });
+  }, [active]);
+
+  return (
+    <nav className="sticky top-[var(--header-h)] z-20 -mx-4 border-b border-line bg-bg px-4 md:-mx-6 md:px-6 xl:mx-0 xl:px-0">
+      <ul ref={tabs} className="relative flex gap-8 overflow-x-auto [scrollbar-width:none]">
+        {groups.map((group) => (
+          <li key={group.key} data-key={group.key} className="shrink-0">
+            <a
+              href={`#${sectionId(group.key)}`}
+              aria-current={active === group.key ? "true" : undefined}
+              className="caps block border-b-2 border-transparent py-4 text-muted aria-current:border-ink aria-current:text-ink"
+            >
+              {group.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
@@ -67,8 +173,10 @@ export function MenuList({
     setBooking({ date: booking.date, hour: booking.hour });
   };
 
-  const groups = (
-    groupBy === "service"
+  const popular = groupBy === "service" ? items.filter((item) => item.popular) : [];
+  const groups: Group[] = [
+    ...(popular.length > 0 ? [{ key: "najprodavanije", title: t.menu.bestsellers, items: popular }] : []),
+    ...(groupBy === "service"
       ? SERVICES.map((service) => ({
           key: service.id,
           title: serviceLabel(service.id, t),
@@ -79,22 +187,35 @@ export function MenuList({
           title: restaurant.name,
           items: items.filter((item) => item.restaurantId === restaurant.id),
         }))
-  ).filter((group) => group.items.length > 0);
+    ).filter((group) => group.items.length > 0),
+  ];
 
   return (
-    <div className="flex flex-col gap-12">
-      {groups.map((group) => (
-        <section key={group.key} aria-labelledby={`grupa-${group.key}`}>
-          <h2 id={`grupa-${group.key}`} className="border-b border-ink pb-3 text-2xl font-medium tracking-[-0.01em]">
-            {group.title}
-          </h2>
-          <ul>
-            {group.items.map((item) => (
-              <MenuRow key={item.id} item={item} inCart={inCart.get(item.id)} onAdd={rememberBooking} />
-            ))}
-          </ul>
-        </section>
-      ))}
+    <div>
+      <CategoryTabs groups={groups} />
+      <div className="flex flex-col gap-14 pt-10">
+        {groups.map((group) => (
+          <section
+            key={group.key}
+            id={sectionId(group.key)}
+            aria-labelledby={`${sectionId(group.key)}-naslov`}
+            className="scroll-mt-[calc(var(--header-h)+72px)]"
+          >
+            <h2 id={`${sectionId(group.key)}-naslov`} className="caps-title mb-6 text-lg md:text-xl">
+              {group.title}
+            </h2>
+            {group.key === "najprodavanije" ? (
+              <Bestsellers items={group.items} onAdd={rememberBooking} />
+            ) : (
+              <ul className="border-t border-line">
+                {group.items.map((item) => (
+                  <MenuRow key={item.id} item={item} quantity={inCart.get(item.id)} onAdd={rememberBooking} />
+                ))}
+              </ul>
+            )}
+          </section>
+        ))}
+      </div>
     </div>
   );
 }

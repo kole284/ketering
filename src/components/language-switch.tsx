@@ -24,13 +24,13 @@ export function LanguageDropdown() {
 
   return (
     <details ref={details} className="group relative">
-      <summary className="flex h-11 cursor-pointer list-none items-center gap-1.5 rounded-full px-2 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
-        <GlobeIcon />
+      <summary className="caps flex h-10 shrink-0 cursor-pointer list-none items-center gap-1.5 px-1 [&::-webkit-details-marker]:hidden">
+        <GlobeIcon size={18} />
         {current.short}
-        <ChevronDownIcon size={16} className="transition-transform group-open:rotate-180" />
+        <ChevronDownIcon size={14} className="transition-transform group-open:rotate-180" />
         <span className="sr-only">{t.header.chooseLanguage}</span>
       </summary>
-      <ul className="absolute right-0 z-20 mt-2 w-40 rounded-xl border border-line bg-bg p-1 shadow-[0_8px_24px_rgb(0_0_0/0.08)]">
+      <ul className="absolute right-0 z-20 mt-2 w-40 border border-line bg-bg p-1">
         {LANGUAGES.map((lang) => (
           <li key={lang.code}>
             <button
@@ -41,7 +41,7 @@ export function LanguageDropdown() {
                 details.current?.removeAttribute("open");
                 if (lang.code !== locale) switchTo(lang.code);
               }}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-surface aria-current:font-medium"
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-surface aria-current:font-medium"
             >
               {lang.label}
               <span className="text-muted">{lang.short}</span>
@@ -72,7 +72,7 @@ export function LanguageButtons() {
             aria-label={lang.label}
             aria-pressed={lang.code === locale}
             onClick={() => lang.code !== locale && switchTo(lang.code)}
-            className="h-10 rounded-full border border-line px-[18px] text-[15px] font-medium aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg"
+            className="h-10 caps border border-line px-[18px] aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg"
           >
             {lang.short}
           </button>

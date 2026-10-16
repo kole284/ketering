@@ -33,7 +33,7 @@ export function QuantityStepper({
       >
         –<span className="sr-only">{t.menu.decrease}</span>
       </button>
-      <span className="min-w-24 text-center text-[15px] font-medium tabular-nums" aria-live="polite">
+      <span className="min-w-16 text-center text-[15px] font-medium tabular-nums" aria-live="polite">
         {formatQuantity(item, value, locale, t)}
       </span>
       <button

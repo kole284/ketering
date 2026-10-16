@@ -2,7 +2,7 @@
 
 @theme {
   --color-bg: #ffffff;
-  --color-surface: #f6f6f6;
+  --color-surface: #f4f4f2;
   --color-ink: #000000;
   --color-muted: #6e6e6e;
   --color-line: #e4e4e4;
@@ -22,4 +22,25 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-ink);
   outline-offset: 2px;
+}
+
+/* COS-style spaced capitals: small UI labels (nav, buttons, step labels). */
+@utility caps {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+/* COS-style spaced capitals for page and section titles. */
+@utility caps-title {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 400;
+}
+
+/* Height of the sticky header, measured at runtime, so sticky tabs sit right below it. */
+:root {
+  --header-h: 64px;
 }

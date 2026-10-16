@@ -20,7 +20,7 @@ export function OrderSummary({
   ] as const;
 
   return (
-    <div className="flex flex-col gap-5 rounded-2xl bg-surface p-5 md:p-6">
+    <div className="flex flex-col gap-5 bg-surface p-5 md:p-6">
       <dl className="flex flex-col gap-2 text-[15px]">
         {rows.map(([label, amount]) => (
           <div key={label} className="flex justify-between">

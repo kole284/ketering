@@ -17,7 +17,7 @@ function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTML
         {props.required && <span className="text-accent" aria-hidden="true"> *</span>}
       </span>
       <input
-        className="h-14 rounded-2xl border border-line px-5 text-base placeholder:text-muted focus:border-ink focus:outline-none"
+        className="h-14 border border-line px-5 text-base placeholder:text-muted focus:border-ink focus:outline-none"
         {...props}
       />
     </label>
@@ -27,7 +27,7 @@ function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTML
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-5 border-t border-ink pt-6">
-      <h2 className="text-xl font-medium">{title}</h2>
+      <h2 className="caps-title text-base">{title}</h2>
       {children}
     </section>
   );
@@ -55,7 +55,7 @@ export function CheckoutForm() {
         <p className="mt-2 text-lg text-muted">
           {t.checkout.placedText}
         </p>
-        <Link href={href("/")} className="mt-6 inline-flex h-12 items-center rounded-full border border-ink px-7 text-[15px] font-medium">
+        <Link href={href("/")} className="mt-6 inline-flex h-12 items-center caps border border-ink px-7">
           {t.checkout.home}
         </Link>
       </div>
@@ -68,7 +68,7 @@ export function CheckoutForm() {
         <p className="text-lg text-muted">{t.checkout.empty}</p>
         <Link
           href={href("/")}
-          className="mt-6 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[15px] font-semibold text-on-accent hover:bg-accent-strong"
+          className="mt-6 inline-flex h-12 items-center caps bg-accent px-7 text-on-accent hover:bg-accent-strong"
         >
           {t.cart.chooseSlot}
         </Link>
@@ -77,8 +77,8 @@ export function CheckoutForm() {
   }
 
   return (
-    <form onSubmit={submit} className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
-      <div className="flex max-w-2xl flex-col gap-10">
+    <form onSubmit={submit} className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
+      <div className="flex min-w-0 max-w-2xl flex-col gap-10">
         <Section title={t.checkout.slot}>
           {date && hour !== undefined ? (
             <p className="text-lg">
@@ -113,7 +113,7 @@ export function CheckoutForm() {
             ).map(([value, label]) => (
               <label
                 key={value}
-                className={`flex h-14 cursor-pointer items-center gap-3 rounded-2xl border px-5 has-focus-visible:outline-2 has-focus-visible:outline-ink ${
+                className={`flex h-14 cursor-pointer items-center gap-3 border px-5 has-focus-visible:outline-2 has-focus-visible:outline-ink ${
                   buyer === value ? "border-accent bg-accent-soft" : "border-line hover:border-ink"
                 }`}
               >
@@ -158,7 +158,7 @@ export function CheckoutForm() {
         <OrderSummary cart={cart}>
           <button
             type="submit"
-            className="h-14 rounded-full bg-accent text-base font-semibold text-on-accent hover:bg-accent-strong"
+            className="h-14 caps bg-accent text-on-accent hover:bg-accent-strong"
           >
             {fill(t.checkout.pay, { amount: formatPrice(cart.total, locale, t) })}
           </button>

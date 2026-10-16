@@ -33,7 +33,7 @@ async function Results({ searchParams }: Pick<PageProps<"/[lang]/restorani">, "s
 
   return (
     <>
-      <div className="flex flex-col gap-5 rounded-2xl bg-surface p-5 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-5 bg-surface p-5 md:flex-row md:items-center md:justify-between">
         <dl className="grid grid-cols-2 gap-x-8 gap-y-4 md:flex">
           <SummaryItem
             label={t.restaurants.date}
@@ -53,7 +53,7 @@ async function Results({ searchParams }: Pick<PageProps<"/[lang]/restorani">, "s
         </dl>
         <Link
           href={editHref}
-          className="flex h-11 items-center justify-center rounded-full border border-ink px-6 text-[15px] font-medium hover:bg-bg"
+          className="flex h-11 items-center justify-center caps border border-ink px-6 hover:bg-bg"
         >
           {hasSlot ? t.restaurants.edit : t.restaurants.chooseSlot}
         </Link>
@@ -72,12 +72,12 @@ async function Results({ searchParams }: Pick<PageProps<"/[lang]/restorani">, "s
           ))}
         </ul>
       ) : (
-        <div className="mt-6 rounded-2xl border border-line px-6 py-12 text-center">
+        <div className="mt-6 border border-line px-6 py-12 text-center">
           <p className="text-xl font-medium">{t.restaurants.emptyTitle}</p>
           <p className="mx-auto mt-2 max-w-md text-[15px] text-muted">{t.restaurants.emptyText}</p>
           <Link
             href={editHref}
-            className="mt-6 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[15px] font-semibold text-on-accent hover:bg-accent-strong"
+            className="mt-6 inline-flex h-12 items-center caps bg-accent px-7 text-on-accent hover:bg-accent-strong"
           >
             {t.restaurants.changeSlot}
           </Link>
@@ -91,7 +91,7 @@ export default async function RestaurantsPage({ searchParams }: PageProps<"/[lan
   const { t } = await getDictionary();
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 py-8 md:px-6 md:py-12 xl:px-12">
-      <h1 className="mb-6 text-[30px] font-medium tracking-[-0.015em] md:text-[40px]">{t.restaurants.title}</h1>
+      <h1 className="mb-6 caps-title text-xl leading-tight hyphens-auto [overflow-wrap:anywhere] md:text-[32px]">{t.restaurants.title}</h1>
       <Suspense>
         <Results searchParams={searchParams} />
       </Suspense>

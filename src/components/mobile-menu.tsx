@@ -70,7 +70,7 @@ export function MobileMenu() {
 
           <div className="flex flex-col gap-7 px-4 pt-6 pb-8">
             <Form action={href("/restorani")} className="relative" onSubmit={() => setOpen(false)}>
-              <SearchIcon size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2" />
+              <SearchIcon size={16} className="pointer-events-none absolute top-1/2 left-0 -translate-y-1/2" />
               <label htmlFor="mobile-search" className="sr-only">
                 {t.header.search}
               </label>
@@ -79,7 +79,7 @@ export function MobileMenu() {
                 name="q"
                 type="search"
                 placeholder={t.header.search}
-                className="h-12 w-full rounded-full bg-surface pr-4 pl-11 text-base placeholder:text-muted focus:ring-1 focus:ring-ink focus:outline-none"
+                className="h-12 w-full border-b border-line bg-transparent pr-1 pl-7 text-base placeholder:text-muted focus:border-ink focus:outline-none"
               />
             </Form>
 
@@ -90,7 +90,7 @@ export function MobileMenu() {
                     <Link
                       href={href(link.path)}
                       onClick={() => setOpen(false)}
-                      className="flex items-center justify-between py-4 text-[22px] font-medium tracking-[-0.01em]"
+                      className="caps-title flex items-center justify-between py-5 text-base"
                     >
                       {link.label}
                       <ChevronRightIcon />
@@ -105,7 +105,7 @@ export function MobileMenu() {
             <Link
               href={href("/korpa")}
               onClick={() => setOpen(false)}
-              className="flex h-13 items-center justify-center gap-2.5 rounded-full bg-accent text-[15px] font-semibold text-on-accent"
+              className="flex h-13 items-center justify-center gap-2.5 caps bg-accent text-on-accent"
             >
               <BagIcon />
               {t.header.goToCart}

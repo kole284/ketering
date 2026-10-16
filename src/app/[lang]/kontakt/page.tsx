@@ -18,7 +18,7 @@ export default async function ContactPage() {
 
   return (
     <PageShell title={t.contact.title} intro={t.contact.intro}>
-      <dl className="grid max-w-3xl gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3">
+      <dl className="grid max-w-3xl gap-px overflow-hidden border border-line bg-line md:grid-cols-3">
         {contacts.map((contact) => (
           <div key={contact.label} className="flex flex-col gap-1 bg-bg p-6">
             <dt className="text-[13px] text-muted">{contact.label}</dt>

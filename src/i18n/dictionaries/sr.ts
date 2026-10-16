@@ -70,6 +70,9 @@ const sr = {
     viewOffer: "Pogledaj ponudu",
   },
   menu: {
+    bestsellers: "Najprodavanije",
+    addItem: "Dodaj u korpu: {name}",
+    remove: "Ukloni iz korpe",
     addToCart: "Stavi u korpu",
     added: "Dodato u korpu",
     inCart: "U korpi: {q}",

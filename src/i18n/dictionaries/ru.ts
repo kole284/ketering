@@ -75,6 +75,9 @@ const ru: Dictionary = {
     viewOffer: "Смотреть меню",
   },
   menu: {
+    bestsellers: "Хиты продаж",
+    addItem: "Добавить в корзину: {name}",
+    remove: "Удалить из корзины",
     addToCart: "В корзину",
     added: "Добавлено",
     inCart: "В корзине: {q}",

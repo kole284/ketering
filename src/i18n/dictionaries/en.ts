@@ -70,6 +70,9 @@ const en: Dictionary = {
     viewOffer: "View menu",
   },
   menu: {
+    bestsellers: "Bestsellers",
+    addItem: "Add to cart: {name}",
+    remove: "Remove from cart",
     addToCart: "Add to cart",
     added: "Added to cart",
     inCart: "In cart: {q}",

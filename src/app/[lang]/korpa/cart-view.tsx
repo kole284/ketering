@@ -18,7 +18,7 @@ export function CartView() {
         <p className="text-lg text-muted">{t.cart.empty}</p>
         <Link
           href={href("/")}
-          className="mt-6 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[15px] font-semibold text-on-accent hover:bg-accent-strong"
+          className="mt-6 inline-flex h-12 items-center caps bg-accent px-7 text-on-accent hover:bg-accent-strong"
         >
           {t.cart.chooseSlot}
         </Link>
@@ -32,11 +32,11 @@ export function CartView() {
   })).filter((group) => group.lines.length > 0);
 
   return (
-    <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
-      <div className="flex flex-col gap-10">
+    <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
+      <div className="flex min-w-0 flex-col gap-10">
         {groups.map(({ restaurant, lines }) => (
           <section key={restaurant.id} aria-labelledby={`korpa-${restaurant.id}`}>
-            <h2 id={`korpa-${restaurant.id}`} className="border-b border-ink pb-3 text-xl font-medium">
+            <h2 id={`korpa-${restaurant.id}`} className="caps-title border-b border-ink pb-3 text-base">
               {restaurant.name}
             </h2>
             <ul>
@@ -49,14 +49,14 @@ export function CartView() {
                     <p className="text-lg font-medium">{line.item.name}</p>
                     <p className="text-[15px] text-muted">{priceLabel(line.item, locale, t)}</p>
                   </div>
-                  <div className="flex items-center justify-between gap-6">
+                  <div className="flex items-center justify-between gap-4">
                     <QuantityStepper
                       item={line.item}
                       value={line.quantity}
                       onChange={(quantity) => setQuantity(line.itemId, quantity)}
                       allowZero
                     />
-                    <p className="w-28 text-right text-[15px] font-medium tabular-nums">{formatPrice(line.total, locale, t)}</p>
+                    <p className="text-right text-[15px] font-medium tabular-nums md:w-28">{formatPrice(line.total, locale, t)}</p>
                   </div>
                 </li>
               ))}
@@ -69,7 +69,7 @@ export function CartView() {
         <OrderSummary cart={cart}>
           <Link
             href={href("/placanje")}
-            className="flex h-14 items-center justify-center rounded-full bg-accent text-base font-semibold text-on-accent hover:bg-accent-strong"
+            className="flex h-14 items-center justify-center caps bg-accent text-on-accent hover:bg-accent-strong"
           >
             {t.cart.goToPayment}
           </Link>

@@ -28,7 +28,7 @@ async function Restaurant({ params }: Pick<PageProps<"/[lang]/restorani/[id]">, 
       <div className="mx-auto w-full max-w-[1440px] px-4 pt-8 md:px-6 md:pt-12 xl:px-12">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-[30px] font-medium tracking-[-0.015em] md:text-[40px]">{restaurant.name}</h1>
+            <h1 className="caps-title text-xl leading-tight hyphens-auto [overflow-wrap:anywhere] md:text-[32px]">{restaurant.name}</h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px]">
               <span className="flex items-center gap-1.5">
                 <StarIcon size={18} className="text-accent" />

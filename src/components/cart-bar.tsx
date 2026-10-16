@@ -31,7 +31,7 @@ export function CartBar({ offerDrinks = true }: { offerDrinks?: boolean }) {
             type="button"
             onClick={next}
             disabled={cart.count === 0}
-            className="h-12 rounded-full bg-accent px-7 text-[15px] font-semibold text-on-accent transition-colors hover:bg-accent-strong disabled:bg-surface disabled:text-muted"
+            className="h-12 caps bg-accent px-7 text-on-accent transition-colors hover:bg-accent-strong disabled:bg-surface disabled:text-muted"
           >
             {offerDrinks ? t.menu.goToPayment : t.menu.continueToCart}
           </button>
@@ -41,7 +41,7 @@ export function CartBar({ offerDrinks = true }: { offerDrinks?: boolean }) {
       <dialog
         ref={dialog}
         aria-labelledby="pice-naslov"
-        className="m-auto w-[calc(100%-32px)] max-w-md rounded-3xl p-0 backdrop:bg-ink/40"
+        className="m-auto w-[calc(100%-32px)] max-w-md p-0 backdrop:bg-ink/40"
       >
         <div className="flex flex-col gap-6 p-6 md:p-8">
           <div>
@@ -55,13 +55,13 @@ export function CartBar({ offerDrinks = true }: { offerDrinks?: boolean }) {
           <div className="flex flex-col gap-3 sm:flex-row-reverse">
             <Link
               href={href("/pica")}
-              className="flex h-12 flex-1 items-center justify-center rounded-full bg-accent text-[15px] font-semibold text-on-accent hover:bg-accent-strong"
+              className="flex h-12 flex-1 items-center justify-center caps bg-accent text-on-accent hover:bg-accent-strong"
             >
               {t.menu.drinksYes}
             </Link>
             <Link
               href={href("/korpa")}
-              className="flex h-12 flex-1 items-center justify-center rounded-full border border-ink text-[15px] font-medium"
+              className="flex h-12 flex-1 items-center justify-center caps border border-ink"
             >
               {t.menu.drinksNo}
             </Link>
