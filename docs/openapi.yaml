@@ -11,6 +11,23 @@ paths:
       responses:
         "200":
           description: Cities
+  /location/resolve:
+    get:
+      summary: Resolve coordinates to a supported city
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lng
+          in: query
+          required: true
+          schema: { type: number, minimum: -180, maximum: 180 }
+      responses:
+        "200":
+          description: Resolved city or null when outside supported city bounds
+        "422":
+          $ref: "#/components/responses/Error"
   /restaurants:
     get:
       summary: List restaurants

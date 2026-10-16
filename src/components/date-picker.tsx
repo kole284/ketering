@@ -18,6 +18,7 @@ function isValidDateValue(value: string): boolean {
 export function DatePicker({ value, onChange, className }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [draftValue, setDraftValue] = useState(value || "");
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -30,6 +31,11 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
 
     return formatOrderDateLabel(value);
   }, [value]);
+
+  const closePicker = () => {
+    setOpen(false);
+    window.setTimeout(() => triggerRef.current?.focus({ preventScroll: true }), 0);
+  };
 
   useEffect(() => {
     if (!open) {
@@ -59,19 +65,58 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
     };
   }, [draftValue, open, value]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closePicker();
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!firstElement || !lastElement) {
+        return;
+      }
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   const openPicker = () => {
     const fallbackValue = options[0]?.value ?? value;
     setDraftValue(isValidDateValue(value) ? value : fallbackValue);
     setOpen(true);
   };
 
-  const closePicker = () => setOpen(false);
-
   const confirmPicker = () => {
     if (draftValue) {
       onChange(draftValue);
     }
-    setOpen(false);
+    closePicker();
   };
 
   const portalTarget = typeof document !== "undefined" ? document.body : null;
@@ -79,6 +124,7 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={openPicker}
         className={[

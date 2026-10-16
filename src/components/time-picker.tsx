@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 type TimePickerModalProps = {
   isOpen: boolean
   onClose: () => void
   onSelect: (time: string) => void
+  onClosedFocus?: () => void
   minTime?: string // 'HH:MM'
   maxTime?: string // 'HH:MM'
   stepMinutes?: number
@@ -32,9 +33,16 @@ function TimePickerModal({
   maxTime = '23:59',
   stepMinutes = 30,
   initial,
+  onClosedFocus,
 }: TimePickerModalProps) {
   const [selected, setSelected] = useState<string | undefined>(initial)
   const firstRef = useRef<HTMLButtonElement | null>(null)
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+
+  const closeAndRestoreFocus = useCallback(() => {
+    onClose()
+    window.setTimeout(() => onClosedFocus?.(), 0)
+  }, [onClose, onClosedFocus])
 
   useEffect(() => {
     if (isOpen) {
@@ -51,11 +59,35 @@ function TimePickerModal({
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!isOpen) return
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closeAndRestoreFocus()
+        return
+      }
+
+      if (e.key !== 'Tab' || !dialogRef.current) return
+
+      const focusableElements = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (!firstElement || !lastElement) return
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault()
+        lastElement.focus()
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault()
+        firstElement.focus()
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [isOpen, onClose])
+  }, [isOpen, closeAndRestoreFocus])
 
   if (!isOpen) return null
 
@@ -75,11 +107,12 @@ function TimePickerModal({
     <div className="time-picker-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0"
-        onClick={onClose}
+        onClick={closeAndRestoreFocus}
         aria-hidden
       />
 
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         className="time-picker-dialog z-10 max-h-[70vh] w-full max-w-sm overflow-auto p-4"
@@ -87,7 +120,7 @@ function TimePickerModal({
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-medium">Izaberi vreme</h3>
           <button
-            onClick={onClose}
+            onClick={closeAndRestoreFocus}
             className="icon-button"
             aria-label="Zatvori"
           >
@@ -112,6 +145,7 @@ function TimePickerModal({
                   if (!allowed) return
                   onSelect(t)
                   onClose()
+                  window.setTimeout(() => onClosedFocus?.(), 0)
                 }}
                 disabled={!allowed}
                 className={`time-picker-option py-2 px-2 text-sm text-center border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
@@ -128,7 +162,7 @@ function TimePickerModal({
 
         <div className="flex items-center justify-end gap-2 mt-4">
           <button
-            onClick={onClose}
+            onClick={closeAndRestoreFocus}
             className="time-picker-secondary-action px-3 py-1 text-sm"
           >
             Otkaži
@@ -138,6 +172,7 @@ function TimePickerModal({
               if (!selected) return
               onSelect(selected)
               onClose()
+              window.setTimeout(() => onClosedFocus?.(), 0)
             }}
             className="time-picker-primary-action px-4 py-1 text-sm"
             disabled={!selected}
@@ -163,12 +198,14 @@ type TimePickerProps = {
 
 export function TimePicker({ value, onChange, minTime, maxTime, className }: TimePickerProps) {
   const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
 
   const displayValue = value && /^\d{2}:\d{2}$/.test(value) ? value : 'Izaberi vreme'
 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
         className={[
@@ -185,6 +222,7 @@ export function TimePicker({ value, onChange, minTime, maxTime, className }: Tim
         key={value || "empty"}
         isOpen={open}
         onClose={() => setOpen(false)}
+        onClosedFocus={() => triggerRef.current?.focus({ preventScroll: true })}
         onSelect={(t) => {
           onChange(t)
           setOpen(false)

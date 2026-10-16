@@ -18,6 +18,7 @@ import { RestaurantCard } from "@/components/restaurant/restaurant-card";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
+import type { RestaurantSummaryDto } from "@/lib/api/dto";
 import type { CityAvailability, Restaurant } from "@/lib/types/restaurant";
 
 const serviceHighlights = [
@@ -64,6 +65,35 @@ const benefitCards: Array<{ icon: LucideIcon; title: string; text: string }> = [
   },
 ];
 
+type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error?: { message?: string } };
+
+function toRestaurantFromSummaryDto(restaurant: RestaurantSummaryDto): Restaurant {
+  return {
+    id: restaurant.id,
+    slug: restaurant.slug,
+    name: restaurant.name,
+    city: restaurant.city.name,
+    cityId: restaurant.city.id,
+    citySlug: restaurant.city.slug,
+    cuisine: restaurant.cuisine,
+    rating: restaurant.rating,
+    eta: restaurant.eta,
+    cover: restaurant.cover,
+    description: restaurant.description,
+    address: restaurant.address,
+    minOrderRsd: restaurant.minOrderRsd,
+    deliveryFeeRsd: restaurant.deliveryFeeRsd,
+    leadTimeMinutes: restaurant.leadTimeMinutes,
+    timezone: restaurant.timezone,
+    isActive: true,
+    offers: restaurant.offers,
+    products: [],
+    workingHours: [],
+  };
+}
+
 export default function Home() {
   const [cities, setCities] = useState<CityAvailability[]>([]);
   const [selectedCity, setSelectedCity] = useState<string>("");
@@ -89,7 +119,7 @@ export default function Home() {
         setLoadError(null);
         setIsLoadingCities(true);
 
-        const response = await fetch("/api/cities", {
+        const response = await fetch("/api/v1/cities", {
           signal: controller.signal,
         });
 
@@ -97,8 +127,13 @@ export default function Home() {
           throw new Error("Neuspešno učitavanje gradova.");
         }
 
-        const data = (await response.json()) as CityAvailability[];
-        const nextCities = data;
+        const payload = (await response.json()) as ApiResponse<CityAvailability[]>;
+
+        if (!payload.success) {
+          throw new Error(payload.error?.message ?? "Neuspešno učitavanje gradova.");
+        }
+
+        const nextCities = payload.data;
 
         setCities(nextCities);
         setSelectedCity((prev) => {
@@ -143,7 +178,7 @@ export default function Home() {
         setLoadError(null);
         setIsLoadingRestaurants(true);
 
-        const response = await fetch(`/api/restaurants?city=${encodeURIComponent(selectedCity)}`, {
+        const response = await fetch(`/api/v1/restaurants?city=${encodeURIComponent(selectedCity)}`, {
           signal: controller.signal,
         });
 
@@ -151,8 +186,13 @@ export default function Home() {
           throw new Error("Neuspešno učitavanje restorana.");
         }
 
-        const data = (await response.json()) as Restaurant[];
-        setRestaurants(data);
+        const payload = (await response.json()) as ApiResponse<{ items: RestaurantSummaryDto[] }>;
+
+        if (!payload.success) {
+          throw new Error(payload.error?.message ?? "Neuspešno učitavanje restorana.");
+        }
+
+        setRestaurants(payload.data.items.map(toRestaurantFromSummaryDto));
       } catch (error) {
         if (controller.signal.aborted) {
           return;

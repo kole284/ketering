@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useMemo, useRef, useState } from "react";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { DatePicker } from "@/components/date-picker";
 import { TimePicker } from "@/components/time-picker";
@@ -21,6 +21,7 @@ import {
   formatWorkingHoursLabel,
   getRestaurantOrderTimeBounds,
   isTimeWithinRestaurantHours,
+  validateRestaurantOrderTime,
 } from "@/lib/order-time";
 
 type RestaurantCartDemoProps = {
@@ -47,6 +48,85 @@ const initialCheckoutForm: CheckoutFormState = {
   note: "",
 };
 
+function normalizeSerbianPhoneNumber(phone: string): string | null {
+  const trimmed = phone.trim();
+  const digits = trimmed.replace(/\D/g, "");
+
+  if (trimmed.startsWith("+381") && digits.startsWith("381")) {
+    return `+${digits}`;
+  }
+
+  if (digits.startsWith("381") && digits.length >= 11) {
+    return `+${digits}`;
+  }
+
+  if (digits.startsWith("0") && digits.length >= 8 && digits.length <= 10) {
+    return `+381${digits.slice(1)}`;
+  }
+
+  return null;
+}
+
+function getClientValidationError(
+  form: CheckoutFormState,
+  cartItems: ReturnType<typeof buildCartItems>,
+  restaurant: Restaurant,
+  subtotal: number,
+): string | null {
+  if (!cartItems.length) {
+    return "Korpa je prazna. Dodaj bar jednu stavku pre slanja porudžbine.";
+  }
+
+  if (subtotal < restaurant.minOrderRsd) {
+    return `Minimalna vrednost porudžbine je ${formatRsd(restaurant.minOrderRsd)}.`;
+  }
+
+  if (form.customerName.trim().length < 2) {
+    return "Unesi ime i prezime.";
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customerEmail.trim())) {
+    return "Unesi ispravnu email adresu.";
+  }
+
+  if (!normalizeSerbianPhoneNumber(form.customerPhone)) {
+    return "Broj telefona mora biti u srpskom formatu, npr. +381641234567 ili 064 123 4567.";
+  }
+
+  if (form.eventAddress.trim().length < 5) {
+    return "Unesi adresu događaja.";
+  }
+
+  if (!isOrderDateWithinBounds(form.eventDate)) {
+    return "Izaberi datum isporuke od danas do 7 dana unapred.";
+  }
+
+  const timeValidation = validateRestaurantOrderTime(restaurant, form.eventDate, form.eventTime);
+  if (!timeValidation.valid) {
+    switch (timeValidation.reason) {
+      case "closed":
+        return "Restoran je zatvoren izabranog dana.";
+      case "before_opening":
+        return "Izabrano vreme je pre otvaranja restorana.";
+      case "after_closing":
+        return "Izabrano vreme je posle zatvaranja restorana.";
+      case "past":
+        return "Izabrani termin je u prošlosti.";
+      case "lead_time":
+        return "Izabrani termin je preblizu trenutnom vremenu.";
+      case "invalid":
+      default:
+        return "Izaberi validan datum i vreme isporuke.";
+    }
+  }
+
+  if (form.note.trim().length > 500) {
+    return "Napomena ne može biti duža od 500 karaktera.";
+  }
+
+  return null;
+}
+
 export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoProps) {
   const [cart, setCart] = useState<CartState>({});
   const [checkoutForm, setCheckoutForm] = useState<CheckoutFormState>(initialCheckoutForm);
@@ -54,6 +134,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [fallbackSmsLink, setFallbackSmsLink] = useState<string | null>(null);
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   const addToCart = (productId: number) => {
     setCart((prev) => addCartItem(prev, productId));
@@ -76,16 +157,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
   const total = subtotal + (cartItems.length ? deliveryFee : 0);
   const totalCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const orderTimeBounds = getRestaurantOrderTimeBounds(restaurant, checkoutForm.eventDate || undefined);
-
-  const canSubmitOrder =
-    cartItems.length > 0 &&
-    checkoutForm.customerName.trim().length >= 2 &&
-    checkoutForm.customerEmail.includes("@") &&
-    checkoutForm.customerPhone.trim().length >= 6 &&
-    checkoutForm.eventAddress.trim().length >= 5 &&
-    isOrderDateWithinBounds(checkoutForm.eventDate) &&
-    isTimeWithinRestaurantHours(restaurant, checkoutForm.eventDate, checkoutForm.eventTime) &&
-    !isSubmitting;
+  const selectedTimeLooksAvailable = isTimeWithinRestaurantHours(restaurant, checkoutForm.eventDate, checkoutForm.eventTime);
 
   const updateCheckoutField = <K extends keyof CheckoutFormState>(key: K, value: CheckoutFormState[K]) => {
     setCheckoutForm((prev) => ({
@@ -98,14 +170,20 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
     setCart({});
     setCheckoutForm(initialCheckoutForm);
     setFallbackSmsLink(null);
+    idempotencyKeyRef.current = null;
   };
 
   const handleOrderSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!cartItems.length) {
-      setSubmitError("Korpa je prazna. Dodaj stavke pre plaćanja.");
+    const validationError = getClientValidationError(checkoutForm, cartItems, restaurant, subtotal);
+    if (validationError) {
+      setSubmitError(validationError);
       return;
+    }
+
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = crypto.randomUUID();
     }
 
     setIsSubmitting(true);
@@ -114,11 +192,11 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
     setFallbackSmsLink(null);
 
     try {
-      const response = await fetch("/api/orders", {
+      const response = await fetch("/api/v1/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Idempotency-Key": crypto.randomUUID(),
+          "Idempotency-Key": idempotencyKeyRef.current,
         },
         body: JSON.stringify({
           restaurantId: restaurant.id,
@@ -332,7 +410,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
           </div>
         )}
 
-        <form className="mt-5 space-y-4" onSubmit={handleOrderSubmit}>
+        <form className="mt-5 space-y-4" onSubmit={handleOrderSubmit} noValidate>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="field sm:col-span-2">
               Ime i prezime
@@ -403,6 +481,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
                 {orderTimeBounds.min && orderTimeBounds.max
                   ? ` · Porudžbine od ${orderTimeBounds.min} do ${orderTimeBounds.max}`
                   : " · Nema dostupnog termina za poručivanje"}
+                {checkoutForm.eventTime && !selectedTimeLooksAvailable ? " · Izabrano vreme nije u radnom vremenu" : ""}
               </span>
             </label>
           </div>
@@ -455,7 +534,7 @@ export default function RestaurantCartDemo({ restaurant }: RestaurantCartDemoPro
           ) : null}
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Button type="submit" disabled={!canSubmitOrder} isLoading={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
               {isSubmitting ? "Šaljem..." : "Pošalji porudžbinu"}
             </Button>
             <Button variant="outline" type="button" onClick={clearCheckout} disabled={!cartItems.length || isSubmitting}>

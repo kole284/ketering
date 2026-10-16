@@ -35,7 +35,7 @@ export const orderPayloadSchema = z.object({
   eventDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Unesi validan datum isporuke.").refine(
     isValidDate,
     "Unesi validan datum isporuke.",
-  ).refine(isOrderDateWithinBounds, "Datum isporuke može biti najviše 7 dana unapred."),
+  ).refine(isOrderDateWithinBounds, "Datum isporuke mora biti od danas do najviše 7 dana unapred."),
   eventTime: z.string().trim().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Unesi validno vreme isporuke."),
   note: z.string().trim().max(500, "Napomena ne može biti duža od 500 karaktera.").optional(),
   sendSms: z.boolean().default(true),

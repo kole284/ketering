@@ -10,9 +10,22 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "KeteringGo | Poručivanje keteringa",
   description: "Frontend demo za poručivanje keteringa inspirisan Glovo iskustvom.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "KeteringGo | Poručivanje keteringa",
+    description: "Poručivanje keteringa po gradu, restoranu, korpi i terminu isporuke.",
+    siteName: "KeteringGo",
+    locale: "sr_RS",
+    type: "website",
+  },
   manifest: "/site.webmanifest",
   icons: {
     icon: [

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Clock, MapPin, ShoppingCart, Star, Truck } from "lucide-react";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -14,6 +15,36 @@ export const dynamic = "force-dynamic";
 type RestaurantDetailsPageProps = {
   params: Promise<{ id: string }>;
 };
+
+export async function generateMetadata({ params }: RestaurantDetailsPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const restaurantId = Number(id);
+
+  if (Number.isNaN(restaurantId)) {
+    return {
+      title: "Restoran nije pronađen | KeteringGo",
+    };
+  }
+
+  const restaurant = await getRestaurantById(restaurantId);
+
+  if (!restaurant) {
+    return {
+      title: "Restoran nije pronađen | KeteringGo",
+    };
+  }
+
+  return {
+    title: `${restaurant.name} | KeteringGo`,
+    description: `${restaurant.cuisine} ketering u gradu ${restaurant.city}. Minimalna porudžbina ${formatRsd(restaurant.minOrderRsd)}, dostava ${formatRsd(restaurant.deliveryFeeRsd)}.`,
+    openGraph: {
+      title: `${restaurant.name} | KeteringGo`,
+      description: restaurant.description,
+      type: "article",
+      images: [restaurant.cover],
+    },
+  };
+}
 
 export default async function RestaurantDetailsPage({ params }: RestaurantDetailsPageProps) {
   const { id } = await params;
