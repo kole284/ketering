@@ -4,14 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Form from "next/form";
 import { usePathname } from "next/navigation";
-import { BagIcon, ChevronRightIcon, CloseIcon, GlobeIcon, MenuIcon, SearchIcon } from "./icons";
-import { CATEGORY_LINKS, LANGUAGES } from "./site-nav";
+import { useI18n } from "@/i18n/provider";
+import { BagIcon, ChevronRightIcon, CloseIcon, MenuIcon, SearchIcon } from "./icons";
+import { LanguageButtons } from "./language-switch";
+import { categoryLinks } from "./site-nav";
 
 export function MobileMenu() {
+  const { t, href } = useI18n();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Close whenever navigation happens.
+  // Close whenever navigation happens, including a language switch.
   const [lastPath, setLastPath] = useState(pathname);
   if (pathname !== lastPath) {
     setLastPath(pathname);
@@ -39,7 +42,7 @@ export function MobileMenu() {
         className="-mr-2 flex size-10 items-center justify-center"
       >
         <MenuIcon size={24} />
-        <span className="sr-only">Otvori meni</span>
+        <span className="sr-only">{t.header.openMenu}</span>
       </button>
 
       {open && (
@@ -47,11 +50,11 @@ export function MobileMenu() {
           id="mobile-menu"
           role="dialog"
           aria-modal="true"
-          aria-label="Meni"
+          aria-label={t.header.menu}
           className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-bg"
         >
           <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-4">
-            <Link href="/" className="text-[22px] font-semibold tracking-[-0.04em] text-accent">
+            <Link href={href("/")} className="text-[22px] font-semibold tracking-[-0.04em] text-accent">
               Servingo
             </Link>
             <button
@@ -61,31 +64,31 @@ export function MobileMenu() {
               autoFocus
             >
               <CloseIcon size={24} />
-              <span className="sr-only">Zatvori meni</span>
+              <span className="sr-only">{t.header.closeMenu}</span>
             </button>
           </div>
 
           <div className="flex flex-col gap-7 px-4 pt-6 pb-8">
-            <Form action="/restorani" className="relative" onSubmit={() => setOpen(false)}>
+            <Form action={href("/restorani")} className="relative" onSubmit={() => setOpen(false)}>
               <SearchIcon size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2" />
               <label htmlFor="mobile-search" className="sr-only">
-                Pretraži restorane i jela
+                {t.header.search}
               </label>
               <input
                 id="mobile-search"
                 name="q"
                 type="search"
-                placeholder="Pretraži restorane i jela"
-                className="h-12 w-full rounded-full bg-surface pr-4 pl-11 text-base placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-ink"
+                placeholder={t.header.search}
+                className="h-12 w-full rounded-full bg-surface pr-4 pl-11 text-base placeholder:text-muted focus:ring-1 focus:ring-ink focus:outline-none"
               />
             </Form>
 
-            <nav aria-label="Kategorije">
+            <nav aria-label={t.header.categories}>
               <ul>
-                {CATEGORY_LINKS.map((link) => (
-                  <li key={link.href} className="border-b border-line">
+                {categoryLinks(t).map((link) => (
+                  <li key={link.path} className="border-b border-line">
                     <Link
-                      href={link.href}
+                      href={href(link.path)}
                       onClick={() => setOpen(false)}
                       className="flex items-center justify-between py-4 text-[22px] font-medium tracking-[-0.01em]"
                     >
@@ -97,32 +100,15 @@ export function MobileMenu() {
               </ul>
             </nav>
 
-            <fieldset>
-              <legend className="mb-3 flex items-center gap-2 text-[13px] font-medium text-muted">
-                <GlobeIcon size={18} />
-                Jezik
-              </legend>
-              <div className="flex gap-2">
-                {LANGUAGES.map((lang) => (
-                  <button
-                    key={lang.code}
-                    type="button"
-                    aria-pressed={lang.code === "SR"}
-                    className="h-10 rounded-full border border-line px-[18px] text-[15px] font-medium aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg"
-                  >
-                    {lang.code}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
+            <LanguageButtons />
 
             <Link
-              href="/korpa"
+              href={href("/korpa")}
               onClick={() => setOpen(false)}
               className="flex h-13 items-center justify-center gap-2.5 rounded-full bg-accent text-[15px] font-semibold text-on-accent"
             >
               <BagIcon />
-              Idi u korpu
+              {t.header.goToCart}
             </Link>
           </div>
         </div>

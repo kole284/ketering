@@ -3,22 +3,24 @@
 import Link from "next/link";
 import { OrderSummary } from "@/components/order-summary";
 import { QuantityStepper } from "@/components/quantity-stepper";
+import { useI18n } from "@/i18n/provider";
 import { cartDetails, setQuantity, useCart } from "@/lib/cart";
 import { formatPrice, priceLabel } from "@/lib/menu";
 import { RESTAURANTS } from "@/lib/restaurants";
 
 export function CartView() {
+  const { locale, t, href } = useI18n();
   const cart = cartDetails(useCart());
 
   if (cart.count === 0) {
     return (
       <div className="mt-8">
-        <p className="text-lg text-muted">Korpa je prazna. Izaberi termin i dodaj nešto iz ponude restorana.</p>
+        <p className="text-lg text-muted">{t.cart.empty}</p>
         <Link
-          href="/"
+          href={href("/")}
           className="mt-6 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[15px] font-semibold text-on-accent hover:bg-accent-strong"
         >
-          Izaberi termin
+          {t.cart.chooseSlot}
         </Link>
       </div>
     );
@@ -45,7 +47,7 @@ export function CartView() {
                 >
                   <div>
                     <p className="text-lg font-medium">{line.item.name}</p>
-                    <p className="text-[15px] text-muted">{priceLabel(line.item)}</p>
+                    <p className="text-[15px] text-muted">{priceLabel(line.item, locale, t)}</p>
                   </div>
                   <div className="flex items-center justify-between gap-6">
                     <QuantityStepper
@@ -54,7 +56,7 @@ export function CartView() {
                       onChange={(quantity) => setQuantity(line.itemId, quantity)}
                       allowZero
                     />
-                    <p className="w-28 text-right text-[15px] font-medium tabular-nums">{formatPrice(line.total)}</p>
+                    <p className="w-28 text-right text-[15px] font-medium tabular-nums">{formatPrice(line.total, locale, t)}</p>
                   </div>
                 </li>
               ))}
@@ -66,10 +68,10 @@ export function CartView() {
       <div className="lg:sticky lg:top-28">
         <OrderSummary cart={cart}>
           <Link
-            href="/placanje"
+            href={href("/placanje")}
             className="flex h-14 items-center justify-center rounded-full bg-accent text-base font-semibold text-on-accent hover:bg-accent-strong"
           >
-            Idi na plaćanje
+            {t.cart.goToPayment}
           </Link>
         </OrderSummary>
       </div>

@@ -1,3 +1,5 @@
+import { INTL_LOCALE, plural, type Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/dictionaries/sr";
 import type { ServiceId } from "./booking";
 
 export type Unit = "kg" | "kom" | "porcija" | "paket";
@@ -79,16 +81,22 @@ export const DRINKS = MENU.filter((item) => item.service === "pica");
 export const DELIVERY_FEE = 400;
 export const PLATFORM_FEE = 150;
 
-const rsd = new Intl.NumberFormat("sr-Latn-RS", { maximumFractionDigits: 0 });
-export const formatPrice = (amount: number) => `${rsd.format(Math.round(amount))} din`;
+export function formatPrice(amount: number, locale: Locale, t: Dictionary) {
+  const number = new Intl.NumberFormat(INTL_LOCALE[locale], { maximumFractionDigits: 0 }).format(Math.round(amount));
+  return `${number} ${t.units.currency}`;
+}
 
-const qty = new Intl.NumberFormat("sr-Latn-RS", { maximumFractionDigits: 1 });
-export const formatQuantity = (item: Pick<MenuItem, "unit">, quantity: number) => {
-  if (item.unit === "kg") return `${qty.format(quantity)} kg`;
-  if (item.unit === "paket") return `${quantity} ${quantity === 1 ? "paket" : "paketa"}`;
-  if (item.unit === "porcija") return `${quantity} ${quantity === 1 ? "porcija" : quantity < 5 ? "porcije" : "porcija"}`;
-  return `${quantity} kom`;
-};
+export function formatQuantity(item: Pick<MenuItem, "unit">, quantity: number, locale: Locale, t: Dictionary) {
+  if (item.unit === "kg") {
+    return `${new Intl.NumberFormat(INTL_LOCALE[locale], { maximumFractionDigits: 1 }).format(quantity)} ${t.units.kg}`;
+  }
+  if (item.unit === "paket") return plural(locale, quantity, t.units.paket);
+  if (item.unit === "porcija") return plural(locale, quantity, t.units.porcija);
+  return `${quantity} ${t.units.kom}`;
+}
 
-export const priceLabel = (item: MenuItem) =>
-  `${formatPrice(item.price)} / ${item.unitNote ?? item.unit}`;
+const UNIT_KEY = { kg: "kg", kom: "kom", porcija: "perPortion", paket: "perPack" } as const;
+
+// unitNote comes from restaurant data and is not translated.
+export const priceLabel = (item: MenuItem, locale: Locale, t: Dictionary) =>
+  `${formatPrice(item.price, locale, t)} / ${item.unitNote ?? t.units[UNIT_KEY[item.unit]]}`;

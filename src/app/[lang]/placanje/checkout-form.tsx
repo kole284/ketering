@@ -4,6 +4,8 @@ import { useState, type FormEvent, type InputHTMLAttributes, type ReactNode } fr
 import Link from "next/link";
 import { OrderSummary } from "@/components/order-summary";
 import { formatDate, slotLabel } from "@/lib/booking";
+import { fill } from "@/i18n/config";
+import { useI18n } from "@/i18n/provider";
 import { cartDetails, clearCart, useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/menu";
 
@@ -32,6 +34,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export function CheckoutForm() {
+  const { locale, t, href } = useI18n();
   const raw = useCart();
   const cart = cartDetails(raw);
   const { date, hour } = raw.booking;
@@ -48,12 +51,12 @@ export function CheckoutForm() {
   if (placed) {
     return (
       <div className="mt-8 max-w-xl">
-        <p className="text-2xl font-medium">Porudžbina je primljena</p>
+        <p className="text-2xl font-medium">{t.checkout.placedTitle}</p>
         <p className="mt-2 text-lg text-muted">
-          Ovo je test porudžbina. Plaćanje i potvrda mejlom biće dostupni kad povežemo backend.
+          {t.checkout.placedText}
         </p>
-        <Link href="/" className="mt-6 inline-flex h-12 items-center rounded-full border border-ink px-7 text-[15px] font-medium">
-          Nazad na početnu
+        <Link href={href("/")} className="mt-6 inline-flex h-12 items-center rounded-full border border-ink px-7 text-[15px] font-medium">
+          {t.checkout.home}
         </Link>
       </div>
     );
@@ -62,12 +65,12 @@ export function CheckoutForm() {
   if (cart.count === 0) {
     return (
       <div className="mt-8">
-        <p className="text-lg text-muted">Korpa je prazna, pa nema šta da se plati.</p>
+        <p className="text-lg text-muted">{t.checkout.empty}</p>
         <Link
-          href="/"
+          href={href("/")}
           className="mt-6 inline-flex h-12 items-center rounded-full bg-accent px-7 text-[15px] font-semibold text-on-accent hover:bg-accent-strong"
         >
-          Izaberi termin
+          {t.cart.chooseSlot}
         </Link>
       </div>
     );
@@ -76,36 +79,36 @@ export function CheckoutForm() {
   return (
     <form onSubmit={submit} className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
       <div className="flex max-w-2xl flex-col gap-10">
-        <Section title="Termin dostave">
+        <Section title={t.checkout.slot}>
           {date && hour !== undefined ? (
             <p className="text-lg">
-              {formatDate(date)}, {slotLabel(hour)}
+              {formatDate(date, locale)}, {slotLabel(hour)}
             </p>
           ) : (
             <p className="text-[15px] text-muted">
-              Termin nije izabran.{" "}
-              <Link href="/" className="font-medium text-ink underline underline-offset-4">
-                Izaberi datum i vreme
+              {t.checkout.noSlot}{" "}
+              <Link href={href("/")} className="font-medium text-ink underline underline-offset-4">
+                {t.checkout.pickSlot}
               </Link>
             </p>
           )}
         </Section>
 
-        <Section title="Podaci za dostavu">
-          <Field label="Ime i prezime" name="ime" autoComplete="name" required />
-          <Field label="Adresa dostave" name="adresa" autoComplete="street-address" required />
+        <Section title={t.checkout.delivery}>
+          <Field label={t.checkout.name} name="ime" autoComplete="name" required />
+          <Field label={t.checkout.address} name="adresa" autoComplete="street-address" required />
           <div className="grid gap-5 md:grid-cols-2">
-            <Field label="Email adresa" name="email" type="email" autoComplete="email" required />
-            <Field label="Broj telefona" name="telefon" type="tel" autoComplete="tel" required />
+            <Field label={t.checkout.email} name="email" type="email" autoComplete="email" required />
+            <Field label={t.checkout.phone} name="telefon" type="tel" autoComplete="tel" required />
           </div>
         </Section>
 
-        <Section title="Kupac">
-          <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Kupac">
+        <Section title={t.checkout.buyer}>
+          <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label={t.checkout.buyer}>
             {(
               [
-                ["fizicko", "Fizičko lice"],
-                ["pravno", "Pravno lice"],
+                ["fizicko", t.checkout.person],
+                ["pravno", t.checkout.company],
               ] as const
             ).map(([value, label]) => (
               <label
@@ -135,18 +138,18 @@ export function CheckoutForm() {
           </div>
           {buyer === "pravno" && (
             <div className="flex flex-col gap-5">
-              <Field label="Naziv firme" name="firma" autoComplete="organization" required />
+              <Field label={t.checkout.companyName} name="firma" autoComplete="organization" required />
               <div className="grid gap-5 md:grid-cols-2">
-                <Field label="PIB" name="pib" inputMode="numeric" pattern="\d{9}" title="PIB ima 9 cifara" required />
-                <Field label="Matični broj" name="mb" inputMode="numeric" pattern="\d{8}" title="Matični broj ima 8 cifara" required />
+                <Field label={t.checkout.pib} name="pib" inputMode="numeric" pattern="\d{9}" title={t.checkout.pibHint} required />
+                <Field label={t.checkout.mb} name="mb" inputMode="numeric" pattern="\d{8}" title={t.checkout.mbHint} required />
               </div>
             </div>
           )}
         </Section>
 
-        <Section title="Plaćanje">
+        <Section title={t.checkout.payment}>
           <p className="text-[15px]">
-            Plaćanje karticom. Posle potvrde otvara se sigurna stranica banke za unos podataka sa kartice.
+            {t.checkout.paymentText}
           </p>
         </Section>
       </div>
@@ -157,10 +160,10 @@ export function CheckoutForm() {
             type="submit"
             className="h-14 rounded-full bg-accent text-base font-semibold text-on-accent hover:bg-accent-strong"
           >
-            Plati {formatPrice(cart.total)}
+            {fill(t.checkout.pay, { amount: formatPrice(cart.total, locale, t) })}
           </button>
-          <Link href="/korpa" className="text-center text-[15px] font-medium underline underline-offset-4">
-            Izmeni korpu
+          <Link href={href("/korpa")} className="text-center text-[15px] font-medium underline underline-offset-4">
+            {t.checkout.editCart}
           </Link>
         </OrderSummary>
       </div>

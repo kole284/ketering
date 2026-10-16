@@ -1,19 +1,15 @@
-export const CATEGORY_LINKS = [
-  { href: "/restorani?usluge=ketering", label: "Ketering" },
-  { href: "/restorani?usluge=torte-i-kolaci", label: "Torte i kolači" },
-  { href: "/restorani?usluge=kuvana-jela", label: "Kuvana jela" },
-  { href: "/restorani?usluge=pica", label: "Pića" },
-];
+import { SERVICES } from "@/lib/booking";
+import type { Dictionary } from "@/i18n/dictionaries/sr";
 
-export const LANGUAGES = [
-  { code: "SR", label: "Srpski" },
-  { code: "EN", label: "English" },
-  { code: "RU", label: "Русский" },
-];
+export const categoryLinks = (t: Dictionary) =>
+  SERVICES.map((service) => ({
+    path: `/restorani?usluge=${service.id}`,
+    label: t.services[service.id],
+  }));
 
-export const FOOTER_LINKS = [
-  { href: "/kontakt", label: "Kontakt" },
-  { href: "/o-nama", label: "O nama" },
-  { href: "/privatnost-i-uslovi", label: "Politika privatnosti i uslovi korišćenja" },
-  { href: "/postani-deo-nas", label: "Postani deo nas" },
+export const footerLinks = (t: Dictionary) => [
+  { path: "/kontakt", label: t.footer.contact },
+  { path: "/o-nama", label: t.footer.about },
+  { path: "/privatnost-i-uslovi", label: t.footer.legal },
+  { path: "/postani-deo-nas", label: t.footer.partner },
 ];

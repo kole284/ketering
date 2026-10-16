@@ -1,3 +1,5 @@
+import { plural, type Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/dictionaries/sr";
 import { belgradeNow, slotTime, type Booking, type ServiceId } from "./booking";
 
 export type Restaurant = {
@@ -98,10 +100,10 @@ export function availableRestaurants(booking: Booking) {
   });
 }
 
-export function leadTimeLabel(hours: number) {
-  if (hours % 24 === 0) {
-    const days = hours / 24;
-    return days === 1 ? "24 sata" : `${days} dana`;
-  }
-  return `${hours} sati`;
+export function leadTimeLabel(hours: number, locale: Locale, t: Dictionary) {
+  const time =
+    hours % 24 === 0 && hours > 24
+      ? plural(locale, hours / 24, t.restaurants.days)
+      : plural(locale, hours, t.restaurants.hours);
+  return t.restaurants.leadTime.replace("{time}", time);
 }

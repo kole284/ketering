@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/page-shell";
+import { getDictionary } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Politika privatnosti i uslovi korišćenja | Servingo" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getDictionary();
+  return { title: `${t.legal.title} | Servingo` };
+}
 
 // The two documents stay clearly separated with their own headings and anchors.
 // Final text must be reviewed by a lawyer before launch.
-const DOCUMENTS = [
-  { id: "privatnost", title: "Politika privatnosti" },
-  { id: "uslovi", title: "Uslovi korišćenja" },
-];
+export default async function LegalPage() {
+  const { t } = await getDictionary();
+  const documents = [
+    { id: "privatnost", title: t.legal.privacy },
+    { id: "uslovi", title: t.legal.terms },
+  ];
 
-export default function LegalPage() {
   return (
-    <PageShell title="Politika privatnosti i uslovi korišćenja">
-      <nav aria-label="Dokumenti" className="flex flex-wrap gap-2">
-        {DOCUMENTS.map((doc) => (
+    <PageShell title={t.legal.title}>
+      <nav aria-label={t.legal.documents} className="flex flex-wrap gap-2">
+        {documents.map((doc) => (
           <a
             key={doc.id}
             href={`#${doc.id}`}
@@ -25,12 +30,10 @@ export default function LegalPage() {
         ))}
       </nav>
 
-      {DOCUMENTS.map((doc) => (
+      {documents.map((doc) => (
         <section key={doc.id} id={doc.id} className="mt-14 max-w-[70ch] scroll-mt-28 border-t border-line pt-10">
           <h2 className="text-[28px] font-medium tracking-[-0.01em]">{doc.title}</h2>
-          <p className="mt-4 text-lg leading-8 text-muted">
-            Tekst dokumenta biće dodat nakon pravnog pregleda.
-          </p>
+          <p className="mt-4 text-lg leading-8 text-muted">{t.legal.pending}</p>
         </section>
       ))}
     </PageShell>

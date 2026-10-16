@@ -1,8 +1,12 @@
+import { INTL_LOCALE, type Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/dictionaries/sr";
+
+// Labels live in the dictionaries under `services`.
 export const SERVICES = [
-  { id: "ketering", label: "Ketering" },
-  { id: "torte-i-kolaci", label: "Torte i kolači" },
-  { id: "kuvana-jela", label: "Kuvana jela" },
-  { id: "pica", label: "Pića" },
+  { id: "ketering" },
+  { id: "torte-i-kolaci" },
+  { id: "kuvana-jela" },
+  { id: "pica" },
 ] as const;
 
 export type ServiceId = (typeof SERVICES)[number]["id"];
@@ -52,15 +56,14 @@ export function bookingSearch(booking: Booking) {
   return search.toString();
 }
 
-export const serviceLabel = (id: ServiceId) =>
-  SERVICES.find((service) => service.id === id)?.label ?? id;
+export const serviceLabel = (id: ServiceId, t: Dictionary) => t.services[id];
 
 export const slotLabel = (hour: number) =>
   TIME_SLOTS.find((slot) => slot.hour === hour)?.label ?? `${pad(hour)}:00`;
 
-export function formatDate(isoDate: string) {
+export function formatDate(isoDate: string, locale: Locale) {
   const [y, m, d] = isoDate.split("-").map(Number);
-  const text = new Intl.DateTimeFormat("sr-Latn", {
+  const text = new Intl.DateTimeFormat(INTL_LOCALE[locale], {
     weekday: "long",
     day: "numeric",
     month: "long",
