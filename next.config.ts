@@ -1,20 +1,17 @@
 import type { NextConfig } from "next";
 
-const allowedDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS ?? "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
 const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
+  /* config options here */
+  cacheComponents: true,
+  partialPrefetching: true,
+  turbopack: {
+    rules: {
+      "*.css": {
+        loaders: ["@tailwindcss/turbopack"],
+        as: "*.css",
       },
-    ],
+    },
   },
-  ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
 };
 
 export default nextConfig;
