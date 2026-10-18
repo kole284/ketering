@@ -2,7 +2,7 @@ import Link from "next/link";
 import { INTL_LOCALE, fill, localePath, plural, type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/sr";
 import { serviceLabel } from "@/lib/booking";
-import { leadTimeLabel, type Restaurant } from "@/lib/restaurants";
+import type { Restaurant } from "@/lib/restaurants";
 import { StarIcon } from "./icons";
 
 export function RestaurantCard({
@@ -22,7 +22,7 @@ export function RestaurantCard({
   );
 
   return (
-    <article className="flex flex-col gap-5 border border-line p-4 md:flex-row md:items-center md:gap-8 md:p-5">
+    <article className="flex flex-col gap-5 md:flex-row md:items-center md:gap-8">
       {/* Photo placeholder until restaurants upload real images. */}
       <div
         className="aspect-[16/10] w-full shrink-0 bg-surface md:aspect-auto md:h-40 md:w-60"
@@ -40,12 +40,11 @@ export function RestaurantCard({
         <p className="text-sm text-muted">
           {restaurant.area}, {restaurant.services.map((id) => serviceLabel(id, t)).join(", ")}
         </p>
-        <p className="text-sm">{leadTimeLabel(restaurant.leadTimeHours, locale, t)}</p>
       </div>
 
       <Link
         href={href}
-        className="flex h-12 shrink-0 items-center justify-center caps bg-accent px-7 text-on-accent transition-colors hover:bg-accent-strong"
+        className="flex h-12 shrink-0 items-center justify-center caps-cta bg-cta px-7 text-on-cta transition-colors hover:bg-cta-strong"
       >
         {t.restaurants.viewOffer}
       </Link>

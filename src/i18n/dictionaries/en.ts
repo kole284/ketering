@@ -98,6 +98,13 @@ const en: Dictionary = {
     currency: "RSD",
   },
   cart: {
+    bill: "Bill",
+    billTotal: "Bill total",
+    pickup: "Pickup",
+    pickupNote: "Delivery needs at least {min} per restaurant. Add {missing} more, or pick the order up yourself. We send the restaurant's address after payment.",
+    toPay: "To pay",
+    grandTotal: "Total to pay",
+    billsNote: "Each restaurant issues its own bill.",
     title: "Cart",
     empty: "Your cart is empty. Choose a time slot and add something from a restaurant's menu.",
     chooseSlot: "Choose a time slot",
@@ -108,6 +115,7 @@ const en: Dictionary = {
     goToPayment: "Go to checkout",
   },
   checkout: {
+    pickupOnly: "You will pick up all orders yourself. We send the restaurant addresses after payment.",
     title: "Checkout",
     slot: "Delivery time",
     noSlot: "No time slot chosen.",

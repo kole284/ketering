@@ -82,6 +82,8 @@ export const DRINKS = MENU.filter((item) => item.service === "pica");
 
 export const DELIVERY_FEE = 400;
 export const PLATFORM_FEE = 150;
+/** Each restaurant's bill must reach this for delivery; below it the customer picks up in person. */
+export const DELIVERY_MINIMUM = 4000;
 
 export function formatPrice(amount: number, locale: Locale, t: Dictionary) {
   const number = new Intl.NumberFormat(INTL_LOCALE[locale], { maximumFractionDigits: 0 }).format(Math.round(amount));

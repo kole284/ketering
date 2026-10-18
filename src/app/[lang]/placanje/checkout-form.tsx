@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
 import Link from "next/link";
-import { OrderSummary } from "@/components/order-summary";
+import { PaymentSummary } from "@/components/order-summary";
 import { formatDate, slotLabel } from "@/lib/booking";
 import { fill } from "@/i18n/config";
 import { useI18n } from "@/i18n/provider";
@@ -68,7 +68,7 @@ export function CheckoutForm() {
         <p className="text-lg text-muted">{t.checkout.empty}</p>
         <Link
           href={href("/")}
-          className="mt-6 inline-flex h-12 items-center caps bg-accent px-7 text-on-accent hover:bg-accent-strong"
+          className="mt-6 inline-flex h-12 items-center caps-cta bg-cta px-7 text-on-cta hover:bg-cta-strong"
         >
           {t.cart.chooseSlot}
         </Link>
@@ -96,7 +96,20 @@ export function CheckoutForm() {
 
         <Section title={t.checkout.delivery}>
           <Field label={t.checkout.name} name="ime" autoComplete="name" required />
-          <Field label={t.checkout.address} name="adresa" autoComplete="street-address" required />
+          {cart.needsAddress ? (
+            <Field label={t.checkout.address} name="adresa" autoComplete="street-address" required />
+          ) : (
+            <p className="text-[15px] text-muted">{t.checkout.pickupOnly}</p>
+          )}
+          {cart.needsAddress && cart.bills.some((bill) => !bill.delivery) && (
+            <p className="text-sm text-muted">
+              {t.cart.pickup}:{" "}
+              {cart.bills
+                .filter((bill) => !bill.delivery)
+                .map((bill) => bill.restaurant.name)
+                .join(", ")}
+            </p>
+          )}
           <div className="grid gap-5 md:grid-cols-2">
             <Field label={t.checkout.email} name="email" type="email" autoComplete="email" required />
             <Field label={t.checkout.phone} name="telefon" type="tel" autoComplete="tel" required />
@@ -114,7 +127,7 @@ export function CheckoutForm() {
               <label
                 key={value}
                 className={`flex h-14 cursor-pointer items-center gap-3 border px-5 has-focus-visible:outline-2 has-focus-visible:outline-ink ${
-                  buyer === value ? "border-accent bg-accent-soft" : "border-line hover:border-ink"
+                  buyer === value ? "border-cta bg-accent-soft" : "border-line hover:border-ink"
                 }`}
               >
                 <input
@@ -127,10 +140,10 @@ export function CheckoutForm() {
                 />
                 <span
                   className={`flex size-5 items-center justify-center rounded-full border ${
-                    buyer === value ? "border-accent" : "border-muted"
+                    buyer === value ? "border-cta" : "border-muted"
                   }`}
                 >
-                  {buyer === value && <span className="size-2.5 rounded-full bg-accent" />}
+                  {buyer === value && <span className="size-2.5 rounded-full bg-cta" />}
                 </span>
                 <span className="text-base font-medium">{label}</span>
               </label>
@@ -154,18 +167,18 @@ export function CheckoutForm() {
         </Section>
       </div>
 
-      <div className="lg:sticky lg:top-28">
-        <OrderSummary cart={cart}>
+      <div className="lg:sticky lg:top-[calc(var(--header-h)+24px)]">
+        <PaymentSummary cart={cart}>
           <button
             type="submit"
-            className="h-14 caps bg-accent text-on-accent hover:bg-accent-strong"
+            className="h-14 caps-cta bg-cta text-on-cta hover:bg-cta-strong"
           >
             {fill(t.checkout.pay, { amount: formatPrice(cart.total, locale, t) })}
           </button>
           <Link href={href("/korpa")} className="text-center text-[15px] font-medium underline underline-offset-4">
             {t.checkout.editCart}
           </Link>
-        </OrderSummary>
+        </PaymentSummary>
       </div>
     </form>
   );

@@ -9,7 +9,7 @@ export default async function NotFound() {
     <PageShell title={t.notFound.title} intro={t.notFound.text}>
       <Link
         href={localePath(locale, "/")}
-        className="inline-flex h-12 items-center caps bg-accent px-7 text-on-accent hover:bg-accent-strong"
+        className="inline-flex h-12 items-center caps-cta bg-cta px-7 text-on-cta hover:bg-cta-strong"
       >
         {t.notFound.home}
       </Link>

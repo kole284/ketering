@@ -117,7 +117,7 @@ function Calendar({
               aria-label={dayLabel(locale, view.y, view.m, day)}
               className={[
                 "flex aspect-square items-center justify-center text-base tabular-nums transition-colors md:text-lg",
-                selected ? "bg-accent font-medium text-on-accent" : past ? "text-[#c9c9c6]" : "hover:bg-bg",
+                selected ? "bg-cta font-bold text-on-cta" : past ? "text-[#c9c9c6]" : "hover:bg-bg",
                 isToday && !selected ? "ring-1 ring-ink ring-inset" : "",
               ].join(" ")}
             >
@@ -195,10 +195,10 @@ export function BookingForm({
                     />
                     <span
                       className={`flex size-5 shrink-0 items-center justify-center border ${
-                        checked ? "border-accent bg-accent" : "border-ink"
+                        checked ? "border-cta bg-cta" : "border-ink"
                       }`}
                     >
-                      {checked && <CheckIcon size={14} strokeWidth={2.5} className="text-on-accent" />}
+                      {checked && <CheckIcon size={14} strokeWidth={2.5} className="text-on-cta" />}
                     </span>
                     <span className="caps-title text-[15px]">{t.services[service.id]}</span>
                   </label>
@@ -238,7 +238,7 @@ export function BookingForm({
             <button
               type="submit"
               disabled={!ready}
-              className="caps h-13 bg-accent text-on-accent transition-colors hover:bg-accent-strong disabled:bg-surface disabled:text-muted"
+              className="caps-cta h-13 bg-cta text-on-cta transition-colors hover:bg-cta-strong disabled:bg-surface disabled:text-muted"
             >
               {t.booking.submit}
             </button>

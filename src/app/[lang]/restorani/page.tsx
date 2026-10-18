@@ -64,9 +64,9 @@ async function Results({ searchParams }: Pick<PageProps<"/[lang]/restorani">, "s
       {!hasSlot && <p className="mt-6 text-[15px] text-muted">{t.restaurants.slotHint}</p>}
 
       {restaurants.length > 0 ? (
-        <ul className="mt-6 flex flex-col gap-4">
+        <ul className="mt-6 divide-y divide-line border-y border-line">
           {restaurants.map((restaurant) => (
-            <li key={restaurant.id}>
+            <li key={restaurant.id} className="py-6">
               <RestaurantCard restaurant={restaurant} search={search} locale={locale} t={t} />
             </li>
           ))}
@@ -77,7 +77,7 @@ async function Results({ searchParams }: Pick<PageProps<"/[lang]/restorani">, "s
           <p className="mx-auto mt-2 max-w-md text-[15px] text-muted">{t.restaurants.emptyText}</p>
           <Link
             href={editHref}
-            className="mt-6 inline-flex h-12 items-center caps bg-accent px-7 text-on-accent hover:bg-accent-strong"
+            className="mt-6 inline-flex h-12 items-center caps-cta bg-cta px-7 text-on-cta hover:bg-cta-strong"
           >
             {t.restaurants.changeSlot}
           </Link>

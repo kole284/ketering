@@ -7,9 +7,12 @@
   --color-muted: #6e6e6e;
   --color-line: #e4e4e4;
   --color-accent: #ff5b19;
-  --color-accent-soft: #ffefe8;
-  --color-accent-strong: #e84a0c;
-  --color-on-accent: #000000;
+  --color-accent-soft: #fff1ea;
+
+  /* Buttons and selected states: a lighter orange than the logo, with bold white text. */
+  --color-cta: #ff7a33;
+  --color-cta-strong: #f2691f;
+  --color-on-cta: #ffffff;
 
   --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
 }
@@ -31,6 +34,15 @@ body {
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;
+}
+
+/* Spaced capitals for orange buttons: bold, so white text stays readable on orange. */
+@utility caps-cta {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 700;
 }
 
 /* COS-style spaced capitals for page and section titles. */

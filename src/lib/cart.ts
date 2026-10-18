@@ -1,7 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { DELIVERY_FEE, PLATFORM_FEE, findItem, type MenuItem } from "./menu";
+import { DELIVERY_FEE, DELIVERY_MINIMUM, PLATFORM_FEE, findItem, type MenuItem } from "./menu";
+import { RESTAURANTS } from "./restaurants";
 
 export type CartLine = { itemId: string; quantity: number };
 export type CartBooking = { date?: string; hour?: number };
@@ -87,13 +88,37 @@ export function cartDetails(cart: CartState) {
     const item = findItem(line.itemId);
     return item ? [{ ...line, item, total: item.price * line.quantity }] : [];
   });
-  const subtotal = lines.reduce((sum, line) => sum + line.total, 0);
-  const fees = lines.length > 0 ? DELIVERY_FEE + PLATFORM_FEE : 0;
+
+  // One restaurant, one bill: fees and the delivery minimum apply per restaurant.
+  const bills = RESTAURANTS.flatMap((restaurant) => {
+    const own = lines.filter((line) => line.item.restaurantId === restaurant.id);
+    if (own.length === 0) return [];
+    const subtotal = own.reduce((sum, line) => sum + line.total, 0);
+    const delivery = subtotal >= DELIVERY_MINIMUM;
+    const deliveryFee = delivery ? DELIVERY_FEE : 0;
+    return [
+      {
+        restaurant,
+        lines: own,
+        subtotal,
+        delivery,
+        deliveryFee,
+        platformFee: PLATFORM_FEE,
+        total: subtotal + deliveryFee + PLATFORM_FEE,
+        missingForDelivery: Math.max(0, DELIVERY_MINIMUM - subtotal),
+      },
+    ];
+  });
+
   return {
     lines,
-    subtotal,
-    total: subtotal + fees,
+    bills,
+    subtotal: lines.reduce((sum, line) => sum + line.total, 0),
+    total: bills.reduce((sum, bill) => sum + bill.total, 0),
     hasDrinks: lines.some((line) => line.item.service === "pica"),
+    needsAddress: bills.some((bill) => bill.delivery),
     count: lines.length,
   };
 }
+
+export type CartBill = ReturnType<typeof cartDetails>["bills"][number];

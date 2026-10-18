@@ -24,7 +24,7 @@ function AddButton({ item, onAdd, className = "" }: { item: MenuItem; onAdd: () 
         addToCart(item, item.min);
         onAdd();
       }}
-      className={`flex size-11 items-center justify-center rounded-full bg-surface transition-colors hover:bg-accent hover:text-on-accent ${className}`}
+      className={`flex size-11 items-center justify-center rounded-full bg-surface transition-colors hover:bg-cta hover:text-on-cta ${className}`}
     >
       <PlusIcon size={20} />
       <span className="sr-only">{fill(t.menu.addItem, { name: item.name })}</span>

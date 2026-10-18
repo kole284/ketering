@@ -105,7 +105,7 @@ export function MobileMenu() {
             <Link
               href={href("/korpa")}
               onClick={() => setOpen(false)}
-              className="flex h-13 items-center justify-center gap-2.5 caps bg-accent text-on-accent"
+              className="flex h-13 items-center justify-center gap-2.5 caps-cta bg-cta text-on-cta"
             >
               <BagIcon />
               {t.header.goToCart}

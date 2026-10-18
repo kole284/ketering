@@ -31,7 +31,7 @@ export function CartBar({ offerDrinks = true }: { offerDrinks?: boolean }) {
             type="button"
             onClick={next}
             disabled={cart.count === 0}
-            className="h-12 caps bg-accent px-7 text-on-accent transition-colors hover:bg-accent-strong disabled:bg-surface disabled:text-muted"
+            className="h-12 caps-cta bg-cta px-7 text-on-cta transition-colors hover:bg-cta-strong disabled:bg-surface disabled:text-muted"
           >
             {offerDrinks ? t.menu.goToPayment : t.menu.continueToCart}
           </button>
@@ -55,7 +55,7 @@ export function CartBar({ offerDrinks = true }: { offerDrinks?: boolean }) {
           <div className="flex flex-col gap-3 sm:flex-row-reverse">
             <Link
               href={href("/pica")}
-              className="flex h-12 flex-1 items-center justify-center caps bg-accent text-on-accent hover:bg-accent-strong"
+              className="flex h-12 flex-1 items-center justify-center caps-cta bg-cta text-on-cta hover:bg-cta-strong"
             >
               {t.menu.drinksYes}
             </Link>

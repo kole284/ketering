@@ -98,6 +98,13 @@ const sr = {
     currency: "din",
   },
   cart: {
+    bill: "Račun",
+    billTotal: "Ukupno za ovaj račun",
+    pickup: "Lično preuzimanje",
+    pickupNote: "Za dostavu je potrebno najmanje {min} po restoranu. Dodaj još {missing} ili preuzmi porudžbinu lično. Adresu restorana šaljemo posle uplate.",
+    toPay: "Za plaćanje",
+    grandTotal: "Ukupno za plaćanje",
+    billsNote: "Svaki restoran izdaje poseban račun.",
     title: "Korpa",
     empty: "Korpa je prazna. Izaberi termin i dodaj nešto iz ponude restorana.",
     chooseSlot: "Izaberi termin",
@@ -108,6 +115,7 @@ const sr = {
     goToPayment: "Idi na plaćanje",
   },
   checkout: {
+    pickupOnly: "Sve porudžbine preuzimaš lično. Adrese restorana šaljemo posle uplate.",
     title: "Plaćanje",
     slot: "Termin dostave",
     noSlot: "Termin nije izabran.",
