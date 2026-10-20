@@ -5,17 +5,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/i18n/provider";
 import { cartDetails, useCart } from "@/lib/cart";
+import { isDrink } from "@/lib/menu";
 import { formatPrice } from "@/lib/menu";
 
 /** Sticky bottom bar with the cart amount. Before checkout it offers drinks, like a "anything else?" upsell. */
-export function CartBar({ offerDrinks = true }: { offerDrinks?: boolean }) {
+export function CartBar({ restaurantId }: { restaurantId?: string }) {
   const { locale, t, href } = useI18n();
   const cart = cartDetails(useCart());
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
 
+  // Offer drinks only on a restaurant page, and only if this restaurant's bill has none yet.
+  const offerDrinks =
+    restaurantId !== undefined &&
+    !cart.lines.some((line) => line.restaurantId === restaurantId && isDrink(line.item));
+
   const next = () => {
-    if (offerDrinks && !cart.hasDrinks) dialog.current?.showModal();
+    if (offerDrinks) dialog.current?.showModal();
     else router.push(href("/korpa"));
   };
 
@@ -33,7 +39,7 @@ export function CartBar({ offerDrinks = true }: { offerDrinks?: boolean }) {
             disabled={cart.count === 0}
             className="h-12 caps-cta bg-cta px-7 text-on-cta transition-colors hover:bg-cta-strong disabled:bg-surface disabled:text-muted"
           >
-            {offerDrinks ? t.menu.goToPayment : t.menu.continueToCart}
+            {restaurantId ? t.menu.goToPayment : t.menu.continueToCart}
           </button>
         </div>
       </div>
@@ -54,7 +60,7 @@ export function CartBar({ offerDrinks = true }: { offerDrinks?: boolean }) {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row-reverse">
             <Link
-              href={href("/pica")}
+              href={href(`/pica?restoran=${restaurantId}`)}
               className="flex h-12 flex-1 items-center justify-center caps-cta bg-cta text-on-cta hover:bg-cta-strong"
             >
               {t.menu.drinksYes}

@@ -18,9 +18,13 @@ export const TIME_SLOTS = Array.from({ length: 12 }, (_, i) => {
   return { hour, label: `${pad(hour)}:00 – ${pad(hour + 1)}:00` };
 });
 
+export const METHODS = ["dostava", "preuzimanje"] as const;
+export type Method = (typeof METHODS)[number];
+
 export type Booking = {
   date?: string;
   hour?: number;
+  method?: Method;
   services: ServiceId[];
   query?: string;
 };
@@ -37,10 +41,12 @@ export function parseBooking(params: SearchParams): Booking {
   const date = first(params.datum);
   const hour = Number(first(params.vreme));
   const query = first(params.q)?.trim();
+  const method = first(params.nacin);
 
   return {
     date: date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined,
     hour: TIME_SLOTS.some((slot) => slot.hour === hour) ? hour : undefined,
+    method: METHODS.find((m) => m === method),
     services: all(params.usluge).filter((id): id is ServiceId =>
       SERVICES.some((service) => service.id === id),
     ),
@@ -53,6 +59,7 @@ export function bookingSearch(booking: Booking) {
   if (booking.date) search.set("datum", booking.date);
   for (const service of booking.services) search.append("usluge", service);
   if (booking.hour !== undefined) search.set("vreme", String(booking.hour));
+  if (booking.method) search.set("nacin", booking.method);
   return search.toString();
 }
 
@@ -98,3 +105,16 @@ export function slotTime(isoDate: string, hour: number) {
   const [y, m, d] = isoDate.split("-").map(Number);
   return Date.UTC(y, m - 1, d, hour);
 }
+
+/** Delivery covers Belgrade and its surrounding municipalities; anywhere else is pickup only. */
+export const DELIVERY_CITIES = [
+  "Beograd",
+  "Barajevo",
+  "Grocka",
+  "Lazarevac",
+  "Mladenovac",
+  "Obrenovac",
+  "Sopot",
+  "Surčin",
+  "Pančevo",
+] as const;

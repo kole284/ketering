@@ -45,11 +45,11 @@ async function Restaurant({ params }: Pick<PageProps<"/[lang]/restorani/[id]">, 
 
         <div className="mt-10">
           <Suspense>
-            <MenuList items={menuFor(restaurant.id)} />
+            <MenuList items={menuFor(restaurant.id)} restaurantId={restaurant.id} />
           </Suspense>
         </div>
       </div>
-      <CartBar />
+      <CartBar restaurantId={restaurant.id} />
     </>
   );
 }

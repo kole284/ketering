@@ -4,7 +4,7 @@ import { useState } from "react";
 import Form from "next/form";
 import { INTL_LOCALE, fill, type Locale } from "@/i18n/config";
 import { useI18n } from "@/i18n/provider";
-import { SERVICES, TIME_SLOTS, type ServiceId } from "@/lib/booking";
+import { METHODS, SERVICES, TIME_SLOTS, type Method, type ServiceId } from "@/lib/booking";
 import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "./icons";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -135,22 +135,26 @@ export function BookingForm({
   defaultDate,
   defaultHour,
   defaultServices = [],
+  defaultMethod,
 }: {
   /** Today's date in Belgrade, from the server, so server and client render the same calendar. */
   todayIso: string;
   defaultDate?: string;
   defaultHour?: number;
   defaultServices?: ServiceId[];
+  defaultMethod?: Method;
 }) {
   const { t, href } = useI18n();
   const [date, setDate] = useState(defaultDate);
   const [services, setServices] = useState<ServiceId[]>(defaultServices);
   const [hour, setHour] = useState(defaultHour === undefined ? "" : String(defaultHour));
+  const [method, setMethod] = useState<Method | undefined>(defaultMethod);
 
   const missing = [
     !date && t.booking.missingDate,
     services.length === 0 && t.booking.missingService,
     !hour && t.booking.missingTime,
+    !method && t.booking.missingMethod,
   ].filter(Boolean) as string[];
   const ready = missing.length === 0;
 
@@ -233,6 +237,42 @@ export function BookingForm({
               <ChevronDownIcon size={18} className="pointer-events-none absolute top-1/2 right-0 -translate-y-1/2" />
             </div>
           </div>
+
+          <fieldset>
+            <legend>
+              <StepLabel step={4}>{t.booking.method}</StepLabel>
+            </legend>
+            <div className="mt-5 border-t border-line" role="radiogroup">
+              {METHODS.map((value) => {
+                const checked = method === value;
+                return (
+                  <label
+                    key={value}
+                    className="flex h-15 cursor-pointer items-center gap-4 border-b border-line has-focus-visible:outline-2 has-focus-visible:outline-ink"
+                  >
+                    <input
+                      type="radio"
+                      name="nacin"
+                      value={value}
+                      checked={checked}
+                      onChange={() => setMethod(value)}
+                      className="sr-only"
+                    />
+                    <span
+                      className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${
+                        checked ? "border-cta" : "border-ink"
+                      }`}
+                    >
+                      {checked && <span className="size-2.5 rounded-full bg-cta" />}
+                    </span>
+                    <span className="caps-title text-[15px]">
+                      {value === "dostava" ? t.booking.delivery : t.booking.pickup}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
           <div className="mt-auto flex flex-col gap-3">
             <button

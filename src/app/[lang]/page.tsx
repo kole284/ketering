@@ -13,6 +13,7 @@ async function Booking({ searchParams }: Pick<PageProps<"/[lang]">, "searchParam
       defaultDate={booking.date}
       defaultHour={booking.hour}
       defaultServices={booking.services}
+      defaultMethod={booking.method}
     />
   );
 }

@@ -19,11 +19,11 @@ export default async function DrinksPage() {
         <p className="mt-3 max-w-[60ch] text-lg text-muted">{t.menu.drinksIntro}</p>
         <div className="mt-10">
           <Suspense>
-            <MenuList items={DRINKS} groupBy="restaurant" />
+            <MenuList items={DRINKS} />
           </Suspense>
         </div>
       </div>
-      <CartBar offerDrinks={false} />
+      <CartBar />
     </>
   );
 }

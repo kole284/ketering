@@ -37,7 +37,7 @@ export function CartView() {
             <ul>
               {bill.lines.map((line) => (
                 <li
-                  key={line.itemId}
+                  key={line.key}
                   className="flex flex-col gap-4 border-b border-line py-5 md:flex-row md:items-center md:justify-between"
                 >
                   <div>
@@ -48,7 +48,7 @@ export function CartView() {
                     <QuantityStepper
                       item={line.item}
                       value={line.quantity}
-                      onChange={(quantity) => setQuantity(line.itemId, quantity)}
+                      onChange={(quantity) => setQuantity(line.key, quantity)}
                       allowZero
                     />
                     <p className="text-right text-[15px] font-medium tabular-nums md:w-28">

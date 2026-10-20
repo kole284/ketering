@@ -31,11 +31,16 @@ export function BillSummary({ bill }: { bill: CartBill }) {
           <dd className="tabular-nums">{price(bill.total)}</dd>
         </div>
       </dl>
-      {!bill.delivery && (
+      {bill.pickupReason && (
         <p className="text-sm text-muted">
-          {fill(t.cart.pickupNote, { min: price(DELIVERY_MINIMUM), missing: price(bill.missingForDelivery) })}
+          {bill.pickupReason === "chosen"
+            ? t.cart.pickupChosen
+            : bill.pickupReason === "city"
+              ? t.cart.pickupCity
+              : fill(t.cart.pickupNote, { min: price(DELIVERY_MINIMUM), missing: price(bill.missingForDelivery) })}
         </p>
       )}
+      {bill.notifyServingo && <p className="text-sm text-muted">{t.cart.drinksNote}</p>}
     </div>
   );
 }
@@ -63,7 +68,6 @@ export function PaymentSummary({ cart, children }: { cart: ReturnType<typeof car
           <dd className="tabular-nums">{price(cart.total)}</dd>
         </div>
       </dl>
-      {cart.bills.length > 1 && <p className="text-sm text-muted">{t.cart.billsNote}</p>}
       {children}
     </div>
   );

@@ -5,9 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { fill } from "@/i18n/config";
 import { useI18n } from "@/i18n/provider";
 import { parseBooking, serviceLabel, SERVICES } from "@/lib/booking";
-import { addToCart, cartDetails, setBooking, setQuantity, useCart } from "@/lib/cart";
-import { formatPrice, formatQuantity, priceLabel, type MenuItem } from "@/lib/menu";
-import { RESTAURANTS } from "@/lib/restaurants";
+import { addToCart, cartDetails, lineKey, setBooking, setQuantity, useCart } from "@/lib/cart";
+import { SERVINGO_DRINKS, formatPrice, formatQuantity, isDrink, priceLabel, type MenuItem } from "@/lib/menu";
+import { findRestaurant } from "@/lib/restaurants";
 import { MinusIcon, PlusIcon, TrashIcon } from "./icons";
 
 type Group = { key: string; title: string; items: MenuItem[] };
@@ -15,15 +15,12 @@ type Group = { key: string; title: string; items: MenuItem[] };
 const sectionId = (key: string) => `grupa-${key}`;
 
 /** Glovo-style round "+" that adds the smallest quantity in one tap. */
-function AddButton({ item, onAdd, className = "" }: { item: MenuItem; onAdd: () => void; className?: string }) {
+function AddButton({ item, onAdd, className = "" }: { item: MenuItem; onAdd: (item: MenuItem) => void; className?: string }) {
   const { t } = useI18n();
   return (
     <button
       type="button"
-      onClick={() => {
-        addToCart(item, item.min);
-        onAdd();
-      }}
+      onClick={() => onAdd(item)}
       className={`flex size-11 items-center justify-center rounded-full bg-surface transition-colors hover:bg-cta hover:text-on-cta ${className}`}
     >
       <PlusIcon size={20} />
@@ -33,10 +30,10 @@ function AddButton({ item, onAdd, className = "" }: { item: MenuItem; onAdd: () 
 }
 
 /** Shown under an item once it is in the cart: trash/minus, quantity, plus. */
-function InCartBox({ item, quantity }: { item: MenuItem; quantity: number }) {
+function InCartBox({ item, quantity, cartKey }: { item: MenuItem; quantity: number; cartKey: string }) {
   const { locale, t } = useI18n();
   const atMin = quantity <= item.min;
-  const change = (delta: number) => setQuantity(item.id, Math.round((quantity + delta) * 10) / 10);
+  const change = (delta: number) => setQuantity(cartKey, Math.round((quantity + delta) * 10) / 10);
 
   return (
     <div className="col-span-full flex items-center justify-between gap-4 border border-line px-4 py-4 md:px-5">
@@ -47,7 +44,7 @@ function InCartBox({ item, quantity }: { item: MenuItem; quantity: number }) {
       <div className="flex h-11 shrink-0 items-center rounded-full bg-surface">
         <button
           type="button"
-          onClick={() => (atMin ? setQuantity(item.id, 0) : change(-item.step))}
+          onClick={() => (atMin ? setQuantity(cartKey, 0) : change(-item.step))}
           className="flex size-11 items-center justify-center"
         >
           {atMin ? <TrashIcon size={18} /> : <MinusIcon size={18} />}
@@ -65,7 +62,17 @@ function InCartBox({ item, quantity }: { item: MenuItem; quantity: number }) {
   );
 }
 
-function MenuRow({ item, quantity, onAdd }: { item: MenuItem; quantity?: number; onAdd: () => void }) {
+function MenuRow({
+  item,
+  quantity,
+  cartKey,
+  onAdd,
+}: {
+  item: MenuItem;
+  quantity?: number;
+  cartKey: string;
+  onAdd: (item: MenuItem) => void;
+}) {
   const { locale, t } = useI18n();
 
   return (
@@ -84,12 +91,12 @@ function MenuRow({ item, quantity, onAdd }: { item: MenuItem; quantity?: number;
         <p className="hidden text-[15px] tabular-nums md:block">{formatPrice(item.price, locale, t)}</p>
         <AddButton item={item} onAdd={onAdd} />
       </div>
-      {quantity !== undefined && <InCartBox item={item} quantity={quantity} />}
+      {quantity !== undefined && <InCartBox item={item} quantity={quantity} cartKey={cartKey} />}
     </li>
   );
 }
 
-function Bestsellers({ items, onAdd }: { items: MenuItem[]; onAdd: () => void }) {
+function Bestsellers({ items, onAdd }: { items: MenuItem[]; onAdd: (item: MenuItem) => void }) {
   const { locale, t } = useI18n();
   return (
     <ul className="-mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:scroll-px-0 md:px-0">
@@ -156,38 +163,37 @@ function CategoryTabs({ groups }: { groups: Group[] }) {
 
 export function MenuList({
   items,
-  groupBy = "service",
+  restaurantId,
 }: {
   items: MenuItem[];
-  /** The drinks page groups by restaurant instead of by service. */
-  groupBy?: "service" | "restaurant";
+  /** The restaurant being viewed. On the drinks page it comes from ?restoran=, set by the drinks prompt. */
+  restaurantId?: string;
 }) {
   const { t } = useI18n();
   const cart = useCart();
   const params = useSearchParams();
-  const inCart = new Map(cartDetails(cart).lines.map((line) => [line.itemId, line.quantity]));
+  const fromParam = params.get("restoran");
+  // Drinks join the bill of the restaurant they were ordered with, or Servingo's own bill.
+  const drinksBill = restaurantId ?? (fromParam && findRestaurant(fromParam) ? fromParam : SERVINGO_DRINKS);
+  const billFor = (item: MenuItem) => (isDrink(item) ? drinksBill : item.restaurantId);
+  const keyFor = (item: MenuItem) => lineKey({ itemId: item.id, restaurantId: billFor(item) });
+  const inCart = new Map(cartDetails(cart).lines.map((line) => [line.key, line.quantity]));
 
-  // Remember the slot chosen on the homepage so checkout can show it.
-  const rememberBooking = () => {
+  const add = (item: MenuItem) => {
+    addToCart(item, item.min, billFor(item));
+    // Remember the slot and method chosen on the homepage so checkout can show them.
     const booking = parseBooking(Object.fromEntries(params));
-    setBooking({ date: booking.date, hour: booking.hour });
+    setBooking({ date: booking.date, hour: booking.hour, method: booking.method });
   };
 
-  const popular = groupBy === "service" ? items.filter((item) => item.popular) : [];
+  const popular = items.filter((item) => item.popular);
   const groups: Group[] = [
     ...(popular.length > 0 ? [{ key: "najprodavanije", title: t.menu.bestsellers, items: popular }] : []),
-    ...(groupBy === "service"
-      ? SERVICES.map((service) => ({
-          key: service.id,
-          title: serviceLabel(service.id, t),
-          items: items.filter((item) => item.service === service.id),
-        }))
-      : RESTAURANTS.map((restaurant) => ({
-          key: restaurant.id,
-          title: restaurant.name,
-          items: items.filter((item) => item.restaurantId === restaurant.id),
-        }))
-    ).filter((group) => group.items.length > 0),
+    ...SERVICES.map((service) => ({
+      key: service.id,
+      title: serviceLabel(service.id, t),
+      items: items.filter((item) => item.service === service.id),
+    })).filter((group) => group.items.length > 0),
   ];
 
   return (
@@ -205,11 +211,17 @@ export function MenuList({
               {group.title}
             </h2>
             {group.key === "najprodavanije" ? (
-              <Bestsellers items={group.items} onAdd={rememberBooking} />
+              <Bestsellers items={group.items} onAdd={add} />
             ) : (
               <ul className="border-t border-line">
                 {group.items.map((item) => (
-                  <MenuRow key={item.id} item={item} quantity={inCart.get(item.id)} onAdd={rememberBooking} />
+                  <MenuRow
+                    key={item.id}
+                    item={item}
+                    quantity={inCart.get(keyFor(item))}
+                    cartKey={keyFor(item)}
+                    onAdd={add}
+                  />
                 ))}
               </ul>
             )}

@@ -14,7 +14,8 @@ export type Restaurant = {
 };
 
 // Placeholder data until the backend is decided.
-export const RESTAURANTS: Restaurant[] = [
+// Every restaurant also sells Servingo's drinks, so "pica" is added below.
+const DATA: Restaurant[] = [
   {
     id: "bistro-dorcol",
     name: "Bistro Dorćol",
@@ -22,7 +23,7 @@ export const RESTAURANTS: Restaurant[] = [
     rating: 4.6,
     ratingCount: 128,
     leadTimeHours: 24,
-    services: ["ketering", "kuvana-jela", "pica"],
+    services: ["ketering", "kuvana-jela"],
   },
   {
     id: "kuhinja-ognjiste",
@@ -43,14 +44,15 @@ export const RESTAURANTS: Restaurant[] = [
     services: ["torte-i-kolaci"],
   },
   {
-    id: "vinoteka-sokak",
-    name: "Vinoteka Sokak",
+    id: "gril-sokak",
+    name: "Gril Sokak",
     area: "Zemun",
     rating: 4.7,
     ratingCount: 96,
     leadTimeHours: 12,
-    services: ["pica"],
+    services: ["ketering", "kuvana-jela"],
   },
+
   {
     id: "domaca-trpeza",
     name: "Domaća trpeza",
@@ -67,9 +69,14 @@ export const RESTAURANTS: Restaurant[] = [
     rating: 4.4,
     ratingCount: 59,
     leadTimeHours: 36,
-    services: ["torte-i-kolaci", "pica"],
+    services: ["torte-i-kolaci"],
   },
 ];
+
+export const RESTAURANTS: Restaurant[] = DATA.map((restaurant) => ({
+  ...restaurant,
+  services: [...restaurant.services, "pica"],
+}));
 
 export function findRestaurant(id: string) {
   return RESTAURANTS.find((restaurant) => restaurant.id === id);

@@ -3,7 +3,8 @@ import type { Dictionary } from "@/i18n/dictionaries/sr";
 
 export const categoryLinks = (t: Dictionary) =>
   SERVICES.map((service) => ({
-    path: `/restorani?usluge=${service.id}`,
+    // Drinks are Servingo's own shop, so "Pića" opens the drinks list instead of restaurants.
+    path: service.id === "pica" ? "/pica" : `/restorani?usluge=${service.id}`,
     label: t.services[service.id],
   }));
 
