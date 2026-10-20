@@ -40,7 +40,6 @@ export function BillSummary({ bill }: { bill: CartBill }) {
               : fill(t.cart.pickupNote, { min: price(DELIVERY_MINIMUM), missing: price(bill.missingForDelivery) })}
         </p>
       )}
-      {bill.notifyServingo && <p className="text-sm text-muted">{t.cart.drinksNote}</p>}
     </div>
   );
 }

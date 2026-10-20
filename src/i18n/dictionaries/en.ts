@@ -108,7 +108,6 @@ const en: Dictionary = {
     pickupNote: "Delivery needs at least {min} per restaurant. Add {missing} more, or pick the order up yourself. We email the restaurant's address after payment.",
     pickupChosen: "You chose pickup. We email the restaurant's address after payment.",
     pickupCity: "There is no delivery to this place, so only pickup is possible. We email the restaurant's address after payment.",
-    drinksNote: "Drinks are supplied by Servingo.",
     toPay: "To pay",
     grandTotal: "Total to pay",
     title: "Cart",

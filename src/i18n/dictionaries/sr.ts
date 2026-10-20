@@ -108,7 +108,6 @@ const sr = {
     pickupNote: "Za dostavu je potrebno najmanje {min} po restoranu. Dodaj još {missing} ili preuzmi porudžbinu lično. Adresu restorana šaljemo na email nakon uplate.",
     pickupChosen: "Biraš lično preuzimanje. Adresu restorana šaljemo na email nakon uplate.",
     pickupCity: "Za ovo mesto nema dostave, pa je moguće samo lično preuzimanje. Adresu restorana šaljemo na email nakon uplate.",
-    drinksNote: "Pića nabavlja Servingo.",
     toPay: "Za plaćanje",
     grandTotal: "Ukupno za plaćanje",
     title: "Korpa",
