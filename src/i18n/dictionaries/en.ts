@@ -146,7 +146,7 @@ const en: Dictionary = {
     mb: "Company registration number",
     mbHint: "Registration number has 8 digits",
     payment: "Payment",
-    paymentText: "Card payment. After you confirm, the bank's secure page opens to enter your card details.",
+    paymentText: "Card payment only.",
     pay: "Pay {amount}",
     editCart: "Edit cart",
     empty: "Your cart is empty, so there is nothing to pay.",
