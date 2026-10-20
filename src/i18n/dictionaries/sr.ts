@@ -146,7 +146,7 @@ const sr = {
     mb: "Matični broj",
     mbHint: "Matični broj ima 8 cifara",
     payment: "Plaćanje",
-    paymentText: "Plaćanje samo karticom.",
+    paymentText: "Plaćanje se vrši isključivo platnom karticom.",
     pay: "Plati {amount}",
     editCart: "Izmeni korpu",
     empty: "Korpa je prazna, pa nema šta da se plati.",
