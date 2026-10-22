@@ -130,6 +130,7 @@ const en: Dictionary = {
     unavailable: "not available",
     title: "Checkout",
     slot: "Delivery time",
+    slotPickup: "Pickup time",
     noSlot: "No time slot chosen.",
     pickSlot: "Choose a date and time",
     delivery: "Customer details",

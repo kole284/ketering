@@ -135,7 +135,7 @@ export function CheckoutForm() {
   return (
     <form onSubmit={submit} className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
       <div className="flex min-w-0 max-w-2xl flex-col gap-10">
-        <Section title={t.checkout.slot}>
+        <Section title={method === "preuzimanje" ? t.checkout.slotPickup : t.checkout.slot}>
           {date && hour !== undefined ? (
             <p className="text-lg">
               {formatDate(date, locale)}, {slotLabel(hour)}

@@ -130,6 +130,7 @@ const sr = {
     unavailable: "nije dostupno",
     title: "Plaćanje",
     slot: "Termin dostave",
+    slotPickup: "Termin preuzimanja",
     noSlot: "Termin nije izabran.",
     pickSlot: "Izaberi datum i vreme",
     delivery: "Podaci korisnika",
