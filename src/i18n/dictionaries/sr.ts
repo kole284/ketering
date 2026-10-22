@@ -132,7 +132,7 @@ const sr = {
     slot: "Termin dostave",
     noSlot: "Termin nije izabran.",
     pickSlot: "Izaberi datum i vreme",
-    delivery: "Podaci za dostavu",
+    delivery: "Podaci korisnika",
     name: "Ime i prezime",
     address: "Adresa dostave",
     email: "Email adresa",

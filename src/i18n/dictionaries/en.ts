@@ -132,7 +132,7 @@ const en: Dictionary = {
     slot: "Delivery time",
     noSlot: "No time slot chosen.",
     pickSlot: "Choose a date and time",
-    delivery: "Delivery details",
+    delivery: "Customer details",
     name: "Full name",
     address: "Delivery address",
     email: "Email address",
