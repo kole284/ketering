@@ -5,9 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { fill } from "@/i18n/config";
 import { useI18n } from "@/i18n/provider";
 import { parseBooking, serviceLabel, SERVICES } from "@/lib/booking";
-import { addToCart, cartDetails, lineKey, setBooking, setQuantity, useCart } from "@/lib/cart";
-import { SERVINGO_DRINKS, formatPrice, formatQuantity, isDrink, priceLabel, type MenuItem } from "@/lib/menu";
-import { findRestaurant } from "@/lib/restaurants";
+import { SERVINGO_SELLER, addToCart, lineKey, setBooking, setQuantity, useCart, type Seller } from "@/lib/cart";
+import { formatPrice, formatQuantity, priceLabel, type MenuItem } from "@/lib/menu";
 import { MinusIcon, PlusIcon, TrashIcon } from "./icons";
 
 type Group = { key: string; title: string; items: MenuItem[] };
@@ -163,24 +162,22 @@ function CategoryTabs({ groups }: { groups: Group[] }) {
 
 export function MenuList({
   items,
-  restaurantId,
+  restaurant,
 }: {
   items: MenuItem[];
   /** The restaurant being viewed. On the drinks page it comes from ?restoran=, set by the drinks prompt. */
-  restaurantId?: string;
+  restaurant?: Seller;
 }) {
   const { t } = useI18n();
   const cart = useCart();
   const params = useSearchParams();
-  const fromParam = params.get("restoran");
-  // Drinks join the bill of the restaurant they were ordered with, or Servingo's own bill.
-  const drinksBill = restaurantId ?? (fromParam && findRestaurant(fromParam) ? fromParam : SERVINGO_DRINKS);
-  const billFor = (item: MenuItem) => (isDrink(item) ? drinksBill : item.restaurantId);
-  const keyFor = (item: MenuItem) => lineKey({ itemId: item.id, restaurantId: billFor(item) });
-  const inCart = new Map(cartDetails(cart).lines.map((line) => [line.key, line.quantity]));
+  // Everything listed goes on one bill: the restaurant's, with its drinks, or Servingo's own for drinks alone.
+  const seller = restaurant ?? SERVINGO_SELLER;
+  const keyFor = (item: MenuItem) => lineKey({ itemId: item.id, restaurantId: seller.id });
+  const inCart = new Map(cart.lines.map((line) => [lineKey(line), line.quantity]));
 
   const add = (item: MenuItem) => {
-    addToCart(item, item.min, billFor(item));
+    addToCart(item, item.min, seller);
     // Remember the slot and method chosen on the homepage so checkout can show them.
     const booking = parseBooking(Object.fromEntries(params));
     setBooking({ date: booking.date, hour: booking.hour, method: booking.method });

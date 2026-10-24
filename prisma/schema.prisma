@@ -1,0 +1,113 @@
+// Phase 1 of docs/BACKEND_PLAN.md: the catalog and the settings checkout needs.
+// Orders, bills and payments come with phase 2.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Service {
+  ketering
+  torte_i_kolaci @map("torte-i-kolaci")
+  kuvana_jela    @map("kuvana-jela")
+  pica
+
+  @@map("service")
+}
+
+enum Unit {
+  kg
+  kom
+  porcija
+  paket
+
+  @@map("unit")
+}
+
+/// The id is the URL slug, e.g. "bistro-dorcol".
+model Restaurant {
+  id            String              @id
+  name          String
+  /// Part of town, shown on the site.
+  area          String
+  /// Pickup address; sent to the customer only after payment, never to the frontend.
+  pickupAddress String              @map("pickup_address")
+  city          String
+  /// Where this restaurant's orders go.
+  orderEmail    String              @map("order_email")
+  phone         String
+  /// Minimum hours between ordering and the delivery slot.
+  leadTimeHours Int                 @map("lead_time_hours")
+  isActive      Boolean             @default(true) @map("is_active")
+  imageUrl      String?             @map("image_url")
+  /// Kept in step with reviews; null until the first one.
+  ratingAvg     Float?              @map("rating_avg")
+  ratingCount   Int                 @default(0) @map("rating_count")
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  services      RestaurantService[]
+  menuItems     MenuItem[]
+
+  @@map("restaurants")
+}
+
+/// What a restaurant offers. Drinks are not listed: every restaurant sells Servingo's.
+model RestaurantService {
+  restaurantId String     @map("restaurant_id")
+  service      Service
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@id([restaurantId, service])
+  @@map("restaurant_services")
+}
+
+/// A dish, or a Servingo drink when restaurantId is null (the migration enforces this with service = 'pica').
+model MenuItem {
+  id           String      @id @default(cuid())
+  restaurantId String?     @map("restaurant_id")
+  service      Service
+  name         String
+  description  String
+  priceRsd     Int         @map("price_rsd")
+  unit         Unit
+  /// Shown next to the price, e.g. "paket od 8 × 0,33 l".
+  unitNote     String?     @map("unit_note")
+  /// Quantities are tenths of a unit: 5 = 0,5 kg.
+  minQtyTenths Int         @default(10) @map("min_qty_tenths")
+  stepTenths   Int         @default(10) @map("step_tenths")
+  isPopular    Boolean     @default(false) @map("is_popular")
+  isActive     Boolean     @default(true) @map("is_active")
+  sortOrder    Int         @default(0) @map("sort_order")
+  imageUrl     String?     @map("image_url")
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
+
+  @@index([restaurantId, sortOrder])
+  @@map("menu_items")
+}
+
+/// Places with delivery; anywhere else is pickup only.
+model DeliveryCity {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  isActive  Boolean @default(true) @map("is_active")
+  sortOrder Int     @default(0) @map("sort_order")
+
+  @@map("delivery_cities")
+}
+
+/// A single row (id = 1). Bills copy these amounts, so changes never touch past orders.
+model Settings {
+  id                 Int      @id @default(1)
+  deliveryFeeRsd     Int      @map("delivery_fee_rsd")
+  platformFeeRsd     Int      @map("platform_fee_rsd")
+  deliveryMinimumRsd Int      @map("delivery_minimum_rsd")
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("settings")
+}

@@ -3,12 +3,14 @@
 import type { ReactNode } from "react";
 import { fill } from "@/i18n/config";
 import { useI18n } from "@/i18n/provider";
-import type { CartBill, cartDetails } from "@/lib/cart";
-import { DELIVERY_MINIMUM, formatPrice } from "@/lib/menu";
+import type { CartBill, CartDetails } from "@/lib/cart";
+import { useConfig } from "@/lib/config";
+import { formatPrice } from "@/lib/menu";
 
 /** One restaurant's bill: food, delivery or pickup, platform fee. */
 export function BillSummary({ bill }: { bill: CartBill }) {
   const { locale, t } = useI18n();
+  const { deliveryMinimum } = useConfig();
   const price = (amount: number) => formatPrice(amount, locale, t);
 
   return (
@@ -37,7 +39,7 @@ export function BillSummary({ bill }: { bill: CartBill }) {
             ? t.cart.pickupChosen
             : bill.pickupReason === "city"
               ? t.cart.pickupCity
-              : fill(t.cart.pickupNote, { min: price(DELIVERY_MINIMUM), missing: price(bill.missingForDelivery) })}
+              : fill(t.cart.pickupNote, { min: price(deliveryMinimum), missing: price(bill.missingForDelivery) })}
         </p>
       )}
     </div>
@@ -45,7 +47,7 @@ export function BillSummary({ bill }: { bill: CartBill }) {
 }
 
 /** Sidebar total: each restaurant's bill and the amount paid in one go. */
-export function PaymentSummary({ cart, children }: { cart: ReturnType<typeof cartDetails>; children?: ReactNode }) {
+export function PaymentSummary({ cart, children }: { cart: CartDetails; children?: ReactNode }) {
   const { locale, t } = useI18n();
   const price = (amount: number) => formatPrice(amount, locale, t);
 

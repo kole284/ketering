@@ -2,87 +2,21 @@ import { plural, type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/sr";
 import { belgradeNow, slotTime, type Booking, type ServiceId } from "./booking";
 
+/** What the site shows of a restaurant; loaded by `src/server/catalog.ts`. */
 export type Restaurant = {
   id: string;
   name: string;
   area: string;
-  rating: number;
+  /** Null until the restaurant has its first review. */
+  rating: number | null;
   ratingCount: number;
   /** Minimum hours between ordering and delivery. */
   leadTimeHours: number;
+  /** Always includes "pica": every restaurant sells Servingo's drinks. */
   services: ServiceId[];
 };
 
-// Placeholder data until the backend is decided.
-// Every restaurant also sells Servingo's drinks, so "pica" is added below.
-const DATA: Restaurant[] = [
-  {
-    id: "bistro-dorcol",
-    name: "Bistro Dorćol",
-    area: "Dorćol",
-    rating: 4.6,
-    ratingCount: 128,
-    leadTimeHours: 24,
-    services: ["ketering", "kuvana-jela"],
-  },
-  {
-    id: "kuhinja-ognjiste",
-    name: "Kuhinja Ognjište",
-    area: "Vračar",
-    rating: 4.8,
-    ratingCount: 212,
-    leadTimeHours: 48,
-    services: ["ketering", "kuvana-jela"],
-  },
-  {
-    id: "poslasticarnica-mila",
-    name: "Poslastičarnica Mila",
-    area: "Novi Beograd",
-    rating: 4.9,
-    ratingCount: 341,
-    leadTimeHours: 72,
-    services: ["torte-i-kolaci"],
-  },
-  {
-    id: "gril-sokak",
-    name: "Gril Sokak",
-    area: "Zemun",
-    rating: 4.7,
-    ratingCount: 96,
-    leadTimeHours: 12,
-    services: ["ketering", "kuvana-jela"],
-  },
-
-  {
-    id: "domaca-trpeza",
-    name: "Domaća trpeza",
-    area: "Zvezdara",
-    rating: 4.5,
-    ratingCount: 77,
-    leadTimeHours: 24,
-    services: ["kuvana-jela", "ketering"],
-  },
-  {
-    id: "slatki-kutak",
-    name: "Slatki kutak",
-    area: "Banovo brdo",
-    rating: 4.4,
-    ratingCount: 59,
-    leadTimeHours: 36,
-    services: ["torte-i-kolaci"],
-  },
-];
-
-export const RESTAURANTS: Restaurant[] = DATA.map((restaurant) => ({
-  ...restaurant,
-  services: [...restaurant.services, "pica"],
-}));
-
-export function findRestaurant(id: string) {
-  return RESTAURANTS.find((restaurant) => restaurant.id === id);
-}
-
-export function availableRestaurants(booking: Booking) {
+export function availableRestaurants(restaurants: Restaurant[], booking: Booking) {
   const now = belgradeNow();
   const slot =
     booking.date && booking.hour !== undefined
@@ -90,7 +24,7 @@ export function availableRestaurants(booking: Booking) {
       : undefined;
   const query = booking.query?.toLocaleLowerCase("sr");
 
-  return RESTAURANTS.filter((restaurant) => {
+  return restaurants.filter((restaurant) => {
     if (
       booking.services.length > 0 &&
       !booking.services.some((service) => restaurant.services.includes(service))

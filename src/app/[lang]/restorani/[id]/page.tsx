@@ -6,22 +6,23 @@ import { StarIcon } from "@/components/icons";
 import { MenuList } from "@/components/menu-list";
 import { INTL_LOCALE, plural } from "@/i18n/config";
 import { getDictionary } from "@/i18n/server";
-import { menuFor } from "@/lib/menu";
-import { RESTAURANTS, findRestaurant, leadTimeLabel } from "@/lib/restaurants";
+import { leadTimeLabel } from "@/lib/restaurants";
+import { getMenu, getRestaurant, getRestaurants } from "@/server/catalog";
 
-export function generateStaticParams() {
-  return RESTAURANTS.map((restaurant) => ({ id: restaurant.id }));
+export async function generateStaticParams() {
+  return (await getRestaurants()).map((restaurant) => ({ id: restaurant.id }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/restorani/[id]">): Promise<Metadata> {
-  const restaurant = findRestaurant((await params).id);
+  const restaurant = await getRestaurant((await params).id);
   return { title: restaurant ? `${restaurant.name} | Servingo` : "Servingo" };
 }
 
 async function Restaurant({ params }: Pick<PageProps<"/[lang]/restorani/[id]">, "params">) {
   const { locale, t } = await getDictionary();
-  const restaurant = findRestaurant((await params).id);
+  const restaurant = await getRestaurant((await params).id);
   if (!restaurant) notFound();
+  const items = await getMenu(restaurant.id);
 
   return (
     <>
@@ -30,13 +31,16 @@ async function Restaurant({ params }: Pick<PageProps<"/[lang]/restorani/[id]">, 
           <div>
             <h1 className="caps-title text-xl leading-tight hyphens-auto [overflow-wrap:anywhere] md:text-[32px]">{restaurant.name}</h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px]">
-              <span className="flex items-center gap-1.5">
-                <StarIcon size={18} className="text-accent" />
-                <span className="font-medium">
-                  {new Intl.NumberFormat(INTL_LOCALE[locale], { minimumFractionDigits: 1 }).format(restaurant.rating)}
+              {/* No rating until the first review. */}
+              {restaurant.rating !== null && (
+                <span className="flex items-center gap-1.5">
+                  <StarIcon size={18} className="text-accent" />
+                  <span className="font-medium">
+                    {new Intl.NumberFormat(INTL_LOCALE[locale], { minimumFractionDigits: 1 }).format(restaurant.rating)}
+                  </span>
+                  <span className="text-muted">({plural(locale, restaurant.ratingCount, t.restaurants.ratings)})</span>
                 </span>
-                <span className="text-muted">({plural(locale, restaurant.ratingCount, t.restaurants.ratings)})</span>
-              </span>
+              )}
               <span className="text-muted">{restaurant.area}</span>
             </p>
           </div>
@@ -45,7 +49,7 @@ async function Restaurant({ params }: Pick<PageProps<"/[lang]/restorani/[id]">, 
 
         <div className="mt-10">
           <Suspense>
-            <MenuList items={menuFor(restaurant.id)} restaurantId={restaurant.id} />
+            <MenuList items={items} restaurant={{ id: restaurant.id, name: restaurant.name }} />
           </Suspense>
         </div>
       </div>

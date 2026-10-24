@@ -106,15 +106,3 @@ export function slotTime(isoDate: string, hour: number) {
   return Date.UTC(y, m - 1, d, hour);
 }
 
-/** Delivery covers Belgrade and its surrounding municipalities; anywhere else is pickup only. */
-export const DELIVERY_CITIES = [
-  "Beograd",
-  "Barajevo",
-  "Grocka",
-  "Lazarevac",
-  "Mladenovac",
-  "Obrenovac",
-  "Sopot",
-  "Surčin",
-  "Pančevo",
-] as const;

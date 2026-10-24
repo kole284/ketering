@@ -4,12 +4,12 @@ import Link from "next/link";
 import { BillSummary, PaymentSummary } from "@/components/order-summary";
 import { QuantityStepper } from "@/components/quantity-stepper";
 import { useI18n } from "@/i18n/provider";
-import { cartDetails, setQuantity, useCart } from "@/lib/cart";
+import { setQuantity, useCartDetails } from "@/lib/cart";
 import { formatPrice, priceLabel } from "@/lib/menu";
 
 export function CartView() {
   const { locale, t, href } = useI18n();
-  const cart = cartDetails(useCart());
+  const cart = useCartDetails();
 
   if (cart.count === 0) {
     return (

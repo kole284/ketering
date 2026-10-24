@@ -2,17 +2,27 @@
 
 import { useSyncExternalStore } from "react";
 import type { Method } from "./booking";
-import { DELIVERY_FEE, DELIVERY_MINIMUM, PLATFORM_FEE, SERVINGO_DRINKS, findItem, isDrink, type MenuItem } from "./menu";
-import { RESTAURANTS } from "./restaurants";
+import { useConfig, type Config } from "./config";
+import { SERVINGO_DRINKS, isDrink, type MenuItem } from "./menu";
 
-/** `restaurantId` is the bill a line belongs to; drinks take the restaurant they were ordered with. */
-export type CartLine = { itemId: string; quantity: number; restaurantId: string };
+/** Whose bill a line goes on: a restaurant, or Servingo for drinks ordered on their own. */
+export type Seller = { id: string; name: string };
+
+/** The bill for drinks ordered without a restaurant (straight from the drinks page). */
+export const SERVINGO_SELLER: Seller = { id: SERVINGO_DRINKS, name: "Servingo" };
+
+/**
+ * `restaurantId` is the bill a line belongs to; drinks take the restaurant they were ordered with.
+ * The item and restaurant name are copied in when added, so the cart renders without the catalog;
+ * the server recalculates every price at checkout.
+ */
+export type CartLine = { itemId: string; quantity: number; restaurantId: string; restaurantName: string; item: MenuItem };
 export type CartBooking = { date?: string; hour?: number; method?: Method };
 type CartState = { lines: CartLine[]; booking: CartBooking };
 
 export const lineKey = (line: Pick<CartLine, "itemId" | "restaurantId">) => `${line.restaurantId}:${line.itemId}`;
 
-// Kept in localStorage until there is a backend.
+// Kept in localStorage; only the booking and lines live here, prices come from the server.
 const KEY = "servingo-cart";
 const EMPTY: CartState = { lines: [], booking: {} };
 
@@ -25,7 +35,10 @@ function load() {
   loaded = true;
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (raw) state = { ...EMPTY, ...JSON.parse(raw) };
+    if (!raw) return;
+    const saved = { ...EMPTY, ...JSON.parse(raw) } as CartState;
+    // Carts saved before the database have no item copy; those lines are dropped.
+    state = { ...saved, lines: saved.lines.filter((line) => line.item && line.restaurantName) };
   } catch {
     // Storage blocked or corrupt; start empty.
   }
@@ -58,12 +71,12 @@ export function useCart() {
   );
 }
 
-export function addToCart(item: MenuItem, quantity: number, restaurantId = item.restaurantId) {
-  const key = lineKey({ itemId: item.id, restaurantId });
+export function addToCart(item: MenuItem, quantity: number, seller: Seller) {
+  const key = lineKey({ itemId: item.id, restaurantId: seller.id });
   const existing = state.lines.find((line) => lineKey(line) === key);
   const lines = existing
-    ? state.lines.map((line) => (lineKey(line) === key ? { ...line, quantity: line.quantity + quantity } : line))
-    : [...state.lines, { itemId: item.id, quantity, restaurantId }];
+    ? state.lines.map((line) => (lineKey(line) === key ? { ...line, item, quantity: line.quantity + quantity } : line))
+    : [...state.lines, { itemId: item.id, quantity, restaurantId: seller.id, restaurantName: seller.name, item }];
   set({ ...state, lines });
 }
 
@@ -86,29 +99,31 @@ export function clearCart() {
   set(EMPTY);
 }
 
-/** The bill for drinks ordered without a restaurant (straight from the drinks page). */
-const SERVINGO_BILL = { id: SERVINGO_DRINKS, name: "Servingo" };
+type DetailsOptions = { method?: Method; cityOk?: boolean };
 
 export function cartDetails(
   cart: CartState,
+  config: Pick<Config, "deliveryFee" | "platformFee" | "deliveryMinimum">,
   // At checkout the chosen method and city decide delivery; elsewhere the homepage choice does.
-  { method = cart.booking.method ?? "dostava", cityOk = true }: { method?: Method; cityOk?: boolean } = {},
+  { method = cart.booking.method ?? "dostava", cityOk = true }: DetailsOptions = {},
 ) {
-  const lines = cart.lines.flatMap((line) => {
-    const item = findItem(line.itemId);
-    // Lines saved before drinks moved to Servingo have no restaurantId.
-    return item ? [{ ...line, restaurantId: line.restaurantId ?? item.restaurantId, key: lineKey(line), item, total: item.price * line.quantity }] : [];
-  });
+  const lines = cart.lines.map((line) => ({ ...line, key: lineKey(line), total: line.item.price * line.quantity }));
 
   // One restaurant, one bill: fees and the delivery minimum apply per restaurant.
-  const sellers = [...RESTAURANTS.map((r) => ({ id: r.id, name: r.name })), SERVINGO_BILL];
-  const bills = sellers.flatMap((seller) => {
+  // Bills follow the order restaurants were added in; Servingo's own drinks bill comes last.
+  const sellers = new Map<string, Seller>();
+  for (const line of lines) {
+    if (line.restaurantId !== SERVINGO_DRINKS) sellers.set(line.restaurantId, { id: line.restaurantId, name: line.restaurantName });
+  }
+  sellers.set(SERVINGO_SELLER.id, SERVINGO_SELLER);
+
+  const bills = [...sellers.values()].flatMap((seller) => {
     const own = lines.filter((line) => line.restaurantId === seller.id);
     if (own.length === 0) return [];
     const subtotal = own.reduce((sum, line) => sum + line.total, 0);
-    const reachesMinimum = subtotal >= DELIVERY_MINIMUM;
+    const reachesMinimum = subtotal >= config.deliveryMinimum;
     const delivery = method === "dostava" && cityOk && reachesMinimum;
-    const deliveryFee = delivery ? DELIVERY_FEE : 0;
+    const deliveryFee = delivery ? config.deliveryFee : 0;
     return [
       {
         restaurant: seller,
@@ -118,9 +133,9 @@ export function cartDetails(
         /** Why a bill is pickup: the customer chose it, the city is outside Belgrade, or it is under the minimum. */
         pickupReason: delivery ? null : method === "preuzimanje" ? "chosen" : !cityOk ? "city" : "minimum",
         deliveryFee,
-        platformFee: PLATFORM_FEE,
-        total: subtotal + deliveryFee + PLATFORM_FEE,
-        missingForDelivery: Math.max(0, DELIVERY_MINIMUM - subtotal),
+        platformFee: config.platformFee,
+        total: subtotal + deliveryFee + config.platformFee,
+        missingForDelivery: Math.max(0, config.deliveryMinimum - subtotal),
         // Servingo buys the drinks, so it must also get the order email for any bill with drinks.
         notifyServingo: own.some((line) => isDrink(line.item)),
       },
@@ -137,4 +152,10 @@ export function cartDetails(
   };
 }
 
-export type CartBill = ReturnType<typeof cartDetails>["bills"][number];
+/** The cart worked out into bills with the current fees. */
+export function useCartDetails(options?: DetailsOptions) {
+  return cartDetails(useCart(), useConfig(), options);
+}
+
+export type CartDetails = ReturnType<typeof cartDetails>;
+export type CartBill = CartDetails["bills"][number];

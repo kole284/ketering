@@ -7,6 +7,7 @@ import { fill, localePath } from "@/i18n/config";
 import { getDictionary } from "@/i18n/server";
 import { bookingSearch, formatDate, parseBooking, serviceLabel, slotLabel } from "@/lib/booking";
 import { availableRestaurants } from "@/lib/restaurants";
+import { getRestaurants } from "@/server/catalog";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getDictionary();
@@ -26,7 +27,7 @@ async function Results({ searchParams }: Pick<PageProps<"/[lang]/restorani">, "s
   const { locale, t } = await getDictionary();
   const booking = parseBooking(await searchParams);
   await connection(); // lead times are checked against the current time
-  const restaurants = availableRestaurants(booking);
+  const restaurants = availableRestaurants(await getRestaurants(), booking);
   const search = bookingSearch(booking);
   const hasSlot = booking.date !== undefined && booking.hour !== undefined;
   const editHref = localePath(locale, `/?${search}`);
