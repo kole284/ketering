@@ -25,7 +25,7 @@ export type MenuItem = {
 /** Drinks are bought and supplied by Servingo itself, so every restaurant offers the same list. */
 export const SERVINGO_DRINKS = "servingo-pica";
 
-export const isDrink = (item: MenuItem) => item.restaurantId === SERVINGO_DRINKS;
+export const isDrink = (item: Pick<MenuItem, "restaurantId">) => item.restaurantId === SERVINGO_DRINKS;
 
 export function formatPrice(amount: number, locale: Locale, t: Dictionary) {
   const number = new Intl.NumberFormat(INTL_LOCALE[locale], { maximumFractionDigits: 0 }).format(Math.round(amount));

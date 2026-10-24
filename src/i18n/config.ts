@@ -19,6 +19,9 @@ export const INTL_LOCALE: Record<Locale, string> = {
 export const hasLocale = (value: string): value is Locale =>
   (LOCALES as readonly string[]).includes(value);
 
+/** A locale from untrusted input, falling back to Serbian. */
+export const parseLocale = (value: unknown): Locale => (typeof value === "string" && hasLocale(value) ? value : DEFAULT_LOCALE);
+
 /** Prefixes an app path ("/restorani?x=1") with the locale. */
 export const localePath = (locale: Locale, path: string) =>
   path === "/" ? `/${locale}` : path.startsWith("/?") ? `/${locale}${path.slice(1)}` : `/${locale}${path}`;

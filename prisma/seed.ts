@@ -4,7 +4,7 @@ import { config } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Service, type Unit } from "../src/generated/prisma/client";
 
-config({ path: [".env.local", ".env"], quiet: true });
+config({ path: ".env", quiet: true });
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL }),
