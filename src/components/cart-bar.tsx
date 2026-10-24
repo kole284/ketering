@@ -4,14 +4,13 @@ import { useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/i18n/provider";
-import { cartDetails, useCart } from "@/lib/cart";
-import { isDrink } from "@/lib/menu";
-import { formatPrice } from "@/lib/menu";
+import { useCartDetails } from "@/lib/cart";
+import { formatPrice, isDrink } from "@/lib/menu";
 
 /** Sticky bottom bar with the cart amount. Before checkout it offers drinks, like a "anything else?" upsell. */
 export function CartBar({ restaurantId }: { restaurantId?: string }) {
   const { locale, t, href } = useI18n();
-  const cart = cartDetails(useCart());
+  const cart = useCartDetails();
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
 

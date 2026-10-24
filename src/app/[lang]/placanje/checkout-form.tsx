@@ -3,10 +3,11 @@
 import { useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
 import Link from "next/link";
 import { PaymentSummary } from "@/components/order-summary";
-import { DELIVERY_CITIES, formatDate, slotLabel, type Method } from "@/lib/booking";
+import { formatDate, slotLabel, type Method } from "@/lib/booking";
 import { fill } from "@/i18n/config";
 import { useI18n } from "@/i18n/provider";
 import { cartDetails, clearCart, setBooking, useCart } from "@/lib/cart";
+import { useConfig } from "@/lib/config";
 import { formatPrice } from "@/lib/menu";
 import { ChevronDownIcon } from "@/components/icons";
 
@@ -86,12 +87,13 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function CheckoutForm() {
   const { locale, t, href } = useI18n();
   const raw = useCart();
+  const config = useConfig();
   const { date, hour } = raw.booking;
   // The homepage choice (step 04) is the default; changing it here updates the saved booking.
   const method: Method = raw.booking.method ?? "dostava";
   const [city, setCity] = useState("");
   const outsideArea = city === "drugo";
-  const cart = cartDetails(raw, { method, cityOk: !outsideArea });
+  const cart = cartDetails(raw, config, { method, cityOk: !outsideArea });
   const [buyer, setBuyer] = useState<"fizicko" | "pravno">("fizicko");
   const [placed, setPlaced] = useState(false);
 
@@ -179,7 +181,7 @@ export function CheckoutForm() {
                     {t.checkout.cityPlaceholder}
                   </option>
                   <optgroup label={t.checkout.cityGroup}>
-                    {DELIVERY_CITIES.map((name) => (
+                    {config.deliveryCities.map((name) => (
                       <option key={name} value={name}>
                         {name}
                       </option>

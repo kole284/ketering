@@ -17,9 +17,6 @@ export function RestaurantCard({
   t: Dictionary;
 }) {
   const href = localePath(locale, `/restorani/${restaurant.id}${search ? `?${search}` : ""}`);
-  const rating = new Intl.NumberFormat(INTL_LOCALE[locale], { minimumFractionDigits: 1 }).format(
-    restaurant.rating,
-  );
 
   return (
     <article className="flex flex-col gap-5 md:flex-row md:items-center md:gap-8">
@@ -32,11 +29,16 @@ export function RestaurantCard({
 
       <div className="flex flex-1 flex-col gap-2">
         <h2 className="text-xl font-medium tracking-[-0.01em] md:text-2xl">{restaurant.name}</h2>
-        <p className="flex items-center gap-1.5 text-[15px]">
-          <StarIcon size={18} className="text-accent" />
-          <span className="font-medium">{rating}</span>
-          <span className="text-muted">({plural(locale, restaurant.ratingCount, t.restaurants.ratings)})</span>
-        </p>
+        {/* No rating until the first review. */}
+        {restaurant.rating !== null && (
+          <p className="flex items-center gap-1.5 text-[15px]">
+            <StarIcon size={18} className="text-accent" />
+            <span className="font-medium">
+              {new Intl.NumberFormat(INTL_LOCALE[locale], { minimumFractionDigits: 1 }).format(restaurant.rating)}
+            </span>
+            <span className="text-muted">({plural(locale, restaurant.ratingCount, t.restaurants.ratings)})</span>
+          </p>
+        )}
         <p className="text-sm text-muted">
           {restaurant.area}, {restaurant.services.map((id) => serviceLabel(id, t)).join(", ")}
         </p>
