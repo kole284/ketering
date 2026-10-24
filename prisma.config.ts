@@ -1,8 +1,9 @@
 import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
 
-// Same files Next.js reads; .env.local comes from `vercel env pull`.
-config({ path: [".env.local", ".env"], quiet: true });
+// Only .env (the local database). .env.local may hold the production URL for `next dev`,
+// and the CLI must never migrate production by accident: set DATABASE_URL_UNPOOLED explicitly for that.
+config({ path: ".env", quiet: true });
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

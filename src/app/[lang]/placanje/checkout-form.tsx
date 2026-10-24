@@ -1,15 +1,19 @@
 "use client";
 
-import { useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
 import Link from "next/link";
 import { PaymentSummary } from "@/components/order-summary";
 import { formatDate, slotLabel, type Method } from "@/lib/booking";
 import { fill } from "@/i18n/config";
 import { useI18n } from "@/i18n/provider";
-import { cartDetails, clearCart, setBooking, useCart } from "@/lib/cart";
+import { cartDetails, markPlaced, setBooking, updateItems, useCart } from "@/lib/cart";
 import { useConfig } from "@/lib/config";
 import { formatPrice } from "@/lib/menu";
 import { ChevronDownIcon } from "@/components/icons";
+import type { Dictionary } from "@/i18n/dictionaries/sr";
+import type { Locale } from "@/i18n/config";
+import type { OrderError } from "@/server/orders";
+import { placeOrder } from "./actions";
 
 function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
@@ -75,6 +79,22 @@ function RadioCards<T extends string>({
   );
 }
 
+function errorText(error: OrderError, locale: Locale, t: Dictionary) {
+  const messages = t.checkout.errors;
+  switch (error.code) {
+    case "item_unavailable":
+      return error.name ? fill(messages.item_unavailable_named, { name: error.name }) : messages.item_unavailable;
+    case "bad_quantity":
+      return fill(messages.bad_quantity, { name: error.name });
+    case "too_late":
+      return fill(messages.too_late, { restaurant: error.restaurant });
+    case "price_changed":
+      return fill(messages.price_changed, { amount: formatPrice(error.total, locale, t) });
+    default:
+      return messages[error.code] ?? messages.generic;
+  }
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-5 border-t border-ink pt-6">
@@ -95,32 +115,35 @@ export function CheckoutForm() {
   const outsideArea = city === "drugo";
   const cart = cartDetails(raw, config, { method, cityOk: !outsideArea });
   const [buyer, setBuyer] = useState<"fizicko" | "pravno">("fizicko");
-  const [placed, setPlaced] = useState(false);
+  // One key per checkout visit: sending the same cart and details twice reuses the order.
+  const clientKey = useRef<string>(null);
+  const [result, dispatch, pending] = useActionState(placeOrder, null);
+  // The server's total wins once it has said the amount changed.
+  const changed = result && !result.ok ? result.errors.find((error) => error.code === "price_changed") : undefined;
+  const total = changed?.total ?? cart.total;
 
-  const submit = (e: FormEvent) => {
+  useEffect(() => {
+    if (!result) return;
+    if (result.ok) {
+      markPlaced(result.code);
+      window.location.assign(result.redirectUrl);
+      return;
+    }
+    if (result.catalog) updateItems(result.catalog);
+  }, [result]);
+
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    // Dispatched by hand so a failed attempt keeps what the customer typed.
     e.preventDefault();
-    // No backend or payment provider yet: this only simulates a placed order.
-    // The backend should email each restaurant its own bill, and also email Servingo
-    // for every bill with drinks (bill.notifyServingo), since Servingo supplies them.
-    clearCart();
-    setPlaced(true);
+    const form = new FormData(e.currentTarget);
+    clientKey.current ??= crypto.randomUUID();
+    form.set("kljuc", clientKey.current);
+    startTransition(() => dispatch(form));
   };
 
-  if (placed) {
-    return (
-      <div className="mt-8 max-w-xl">
-        <p className="text-2xl font-medium">{t.checkout.placedTitle}</p>
-        <p className="mt-2 text-lg text-muted">
-          {t.checkout.placedText}
-        </p>
-        <Link href={href("/")} className="mt-6 inline-flex h-12 items-center caps border border-ink px-7">
-          {t.checkout.home}
-        </Link>
-      </div>
-    );
-  }
+  const errors = result && !result.ok ? [...new Set(result.errors.map((error) => errorText(error, locale, t)))] : [];
 
-  if (cart.count === 0) {
+  if (cart.count === 0 && !result?.ok) {
     return (
       <div className="mt-8">
         <p className="text-lg text-muted">{t.checkout.empty}</p>
@@ -136,6 +159,11 @@ export function CheckoutForm() {
 
   return (
     <form onSubmit={submit} className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:items-start">
+      <input type="hidden" name="korpa" value={JSON.stringify(raw.lines.map(({ itemId, restaurantId, quantity }) => ({ itemId, restaurantId, quantity })))} />
+      <input type="hidden" name="datum" value={date ?? ""} />
+      <input type="hidden" name="vreme" value={hour ?? ""} />
+      <input type="hidden" name="iznos" value={total} />
+      <input type="hidden" name="jezik" value={locale} />
       <div className="flex min-w-0 max-w-2xl flex-col gap-10">
         <Section title={method === "preuzimanje" ? t.checkout.slotPickup : t.checkout.slot}>
           {date && hour !== undefined ? (
@@ -253,11 +281,22 @@ export function CheckoutForm() {
 
       <div className="lg:sticky lg:top-[calc(var(--header-h)+24px)]">
         <PaymentSummary cart={cart}>
+          {errors.length > 0 && (
+            <div role="alert" className="border-l-2 border-cta bg-bg px-4 py-3 text-[15px]">
+              <p className="font-medium">{t.checkout.errorsTitle}</p>
+              <ul className="mt-1 flex flex-col gap-1">
+                {errors.map((message) => (
+                  <li key={message}>{message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <button
             type="submit"
-            className="h-14 caps-cta bg-cta text-on-cta hover:bg-cta-strong"
+            disabled={pending || result?.ok}
+            className="h-14 caps-cta bg-cta text-on-cta hover:bg-cta-strong disabled:bg-surface disabled:text-muted"
           >
-            {fill(t.checkout.pay, { amount: formatPrice(cart.total, locale, t) })}
+            {pending || result?.ok ? t.checkout.paying : fill(t.checkout.pay, { amount: formatPrice(total, locale, t) })}
           </button>
           <Link href={href("/korpa")} className="text-center text-[15px] font-medium underline underline-offset-4">
             {t.checkout.editCart}

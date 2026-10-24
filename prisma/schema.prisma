@@ -1,5 +1,4 @@
-// Phase 1 of docs/BACKEND_PLAN.md: the catalog and the settings checkout needs.
-// Orders, bills and payments come with phase 2.
+// See docs/BACKEND_PLAN.md (kept locally). Money is whole dinars; quantities are tenths of a unit.
 
 generator client {
   provider = "prisma-client"
@@ -51,6 +50,7 @@ model Restaurant {
   updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   services      RestaurantService[]
   menuItems     MenuItem[]
+  bills         Bill[]
 
   @@map("restaurants")
 }
@@ -86,6 +86,7 @@ model MenuItem {
   createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
   restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
+  billItems    BillItem[]
 
   @@index([restaurantId, sortOrder])
   @@map("menu_items")
@@ -103,11 +104,210 @@ model DeliveryCity {
 
 /// A single row (id = 1). Bills copy these amounts, so changes never touch past orders.
 model Settings {
-  id                 Int      @id @default(1)
-  deliveryFeeRsd     Int      @map("delivery_fee_rsd")
-  platformFeeRsd     Int      @map("platform_fee_rsd")
-  deliveryMinimumRsd Int      @map("delivery_minimum_rsd")
-  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                    Int      @id @default(1)
+  deliveryFeeRsd        Int      @map("delivery_fee_rsd")
+  platformFeeRsd        Int      @map("platform_fee_rsd")
+  deliveryMinimumRsd    Int      @map("delivery_minimum_rsd")
+  /// Gets a copy of every bill with drinks, since Servingo supplies them.
+  servingoOrdersEmail   String   @default("porudzbine@servingo.rs") @map("servingo_orders_email")
+  /// How long an order waits for payment before it counts as cancelled.
+  pendingPaymentMinutes Int      @default(30) @map("pending_payment_minutes")
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("settings")
+}
+
+enum Method {
+  dostava
+  preuzimanje
+
+  @@map("method")
+}
+
+enum BuyerType {
+  fizicko
+  pravno
+
+  @@map("buyer_type")
+}
+
+enum OrderStatus {
+  pending_payment
+  paid
+  payment_failed
+  cancelled
+  refunded
+
+  @@map("order_status")
+}
+
+enum Fulfilment {
+  delivery
+  pickup
+
+  @@map("fulfilment")
+}
+
+enum PickupReason {
+  chosen
+  city
+  minimum
+
+  @@map("pickup_reason")
+}
+
+enum BillStatus {
+  new
+  confirmed
+  ready
+  delivered
+  picked_up
+  cancelled
+
+  @@map("bill_status")
+}
+
+enum PaymentStatus {
+  succeeded
+  failed
+
+  @@map("payment_status")
+}
+
+enum Recipient {
+  customer
+  restaurant
+  servingo
+
+  @@map("recipient")
+}
+
+enum NotificationStatus {
+  sent
+  failed
+  /// No mail provider configured; the email was only written to the log.
+  logged
+
+  @@map("notification_status")
+}
+
+/// One card payment by the customer, covering one bill per restaurant.
+model Order {
+  id             String         @id @default(cuid())
+  /// Shown to the customer, e.g. "SRV-7K3Q9".
+  publicCode     String         @unique @map("public_code")
+  /// Lets the customer see the order status without an account.
+  accessToken    String         @map("access_token")
+  /// Language of the customer's emails.
+  locale         String
+  deliveryDate   DateTime       @map("delivery_date") @db.Date
+  slotHour       Int            @map("slot_hour")
+  method         Method
+  /// Set only when at least one bill is delivered.
+  city           String?
+  address        String?
+  customerName   String         @map("customer_name")
+  email          String
+  phone          String
+  buyerType      BuyerType      @map("buyer_type")
+  companyName    String?        @map("company_name")
+  pib            String?
+  mb             String?
+  totalRsd       Int            @map("total_rsd")
+  status         OrderStatus    @default(pending_payment)
+  idempotencyKey String         @unique @map("idempotency_key")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// After this a pending order counts as cancelled, even before the cleanup job runs.
+  expiresAt      DateTime       @map("expires_at") @db.Timestamptz(6)
+  paidAt         DateTime?      @map("paid_at") @db.Timestamptz(6)
+  bills          Bill[]
+  payments       Payment[]
+  notifications  Notification[]
+
+  @@index([status, expiresAt])
+  @@map("orders")
+}
+
+/// One restaurant's bill within an order; restaurantId is null for Servingo's own drinks bill.
+model Bill {
+  id             String         @id @default(cuid())
+  orderId        String         @map("order_id")
+  restaurantId   String?        @map("restaurant_id")
+  /// Copied so the bill reads the same if the restaurant is renamed.
+  sellerName     String         @map("seller_name")
+  fulfilment     Fulfilment
+  pickupReason   PickupReason?  @map("pickup_reason")
+  subtotalRsd    Int            @map("subtotal_rsd")
+  deliveryFeeRsd Int            @map("delivery_fee_rsd")
+  platformFeeRsd Int            @map("platform_fee_rsd")
+  totalRsd       Int            @map("total_rsd")
+  hasDrinks      Boolean        @map("has_drinks")
+  status         BillStatus     @default(new)
+  /// Filled once invoicing is decided (open question 2 in the plan).
+  invoiceNumber  String?        @map("invoice_number")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  restaurant     Restaurant?    @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
+  items          BillItem[]
+  notifications  Notification[]
+
+  @@index([orderId])
+  @@index([restaurantId, status])
+  @@map("bills")
+}
+
+/// A line as it was bought: name and price are copied from the menu.
+model BillItem {
+  id             String    @id @default(cuid())
+  billId         String    @map("bill_id")
+  menuItemId     String?   @map("menu_item_id")
+  name           String
+  unit           Unit
+  unitNote       String?   @map("unit_note")
+  unitPriceRsd   Int       @map("unit_price_rsd")
+  quantityTenths Int       @map("quantity_tenths")
+  lineTotalRsd   Int       @map("line_total_rsd")
+  isDrink        Boolean   @map("is_drink")
+  sortOrder      Int       @default(0) @map("sort_order")
+  bill           Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
+  menuItem       MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([billId])
+  @@map("bill_items")
+}
+
+/// Every payment result the provider reported; the unique key makes a repeated callback a no-op.
+model Payment {
+  id          String        @id @default(cuid())
+  orderId     String        @map("order_id")
+  provider    String
+  providerRef String        @map("provider_ref")
+  amountRsd   Int           @map("amount_rsd")
+  status      PaymentStatus
+  rawPayload  Json?         @map("raw_payload")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerRef])
+  @@index([orderId])
+  @@map("payments")
+}
+
+/// Log of every email sent (or attempted) about an order.
+model Notification {
+  id        String             @id @default(cuid())
+  orderId   String             @map("order_id")
+  billId    String?            @map("bill_id")
+  recipient Recipient
+  toEmail   String             @map("to_email")
+  template  String
+  status    NotificationStatus
+  error     String?
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bill      Bill?              @relation(fields: [billId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("notifications")
 }

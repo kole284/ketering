@@ -55,7 +55,7 @@ type MenuItemRow = {
   isPopular: boolean;
 };
 
-const toMenuItem = (row: MenuItemRow): MenuItem => ({
+export const toMenuItem = (row: MenuItemRow): MenuItem => ({
   id: row.id,
   restaurantId: row.restaurantId ?? SERVINGO_DRINKS,
   service: serviceId(row.service),
